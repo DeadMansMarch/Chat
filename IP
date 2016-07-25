@@ -1,0 +1,20 @@
+
+/* @Error: 1 - HostNotFoundException;
+*/
+package chat;
+
+/**
+ *
+ * @author Liam Pierce
+ */
+public class Chat {
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String[] args) {
+        IP k = new IP("100.100.100.100",22);
+        System.out.println(k.tostring());
+    }
+    
+}
