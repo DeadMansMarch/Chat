@@ -1,0 +1,16 @@
+/**
+ *
+ * @author Liam Pierce
+ */
+package chat;
+
+public class FuncStore {
+    String Name;
+    void Run(){
+        
+    }
+    
+    public FuncStore(String Name){
+        this.Name = Name;
+    }
+}
