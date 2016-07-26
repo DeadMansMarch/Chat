@@ -12,38 +12,31 @@ import java.net.*;
  * @author Liam Pierce
  */
 public class TCPApi {
-    int connectionKey = 0;
-    int listenerKey = 0;
     boolean Log = true;
-    private List<InetAddress> Servers = new ArrayList<>();
-    private List<Socket> Connections = new ArrayList<>();
-    private List<BufferedReader> Readers = new ArrayList<>();
-    private List<List<FuncStore>> ListenerActions = new ArrayList<>();
+
+    final private HashMap<String,Socket> Connections = new HashMap<>();
+    final private HashMap<String,BufferedReader> Readers = new HashMap<>();
+    final private HashMap<String,Timer> Timers = new HashMap<>();
+    final private HashMap<String,HashMap<String,FuncStore>> ListenerActions = new HashMap<>();
     
     
-    public void AddServer(InetAddress IP){
-        Servers.add(IP);
-    }
-    
-    int Connection(IP Host){
+    public void Connection(IP Host,String Name){
         try{
-            Connections.add(new Socket(Host.Converter(),Host.GetPort()));
-            connectionKey += 1;
+            Connections.put(Name,new Socket(Host.Converter(),Host.GetPort()));
         }catch(Exception E){
             if (Log == true){
                 System.out.println("Connection to server: " + Host.GetIP() +
                         " failed.");
             }
         }
-        return connectionKey;
     }
     
-    public void Send(int ConnectionKey,String Send){
-        Socket To = Connections.get(ConnectionKey);
+    public void Send(String Connector,String Send){
+        Socket To = Connections.get(Connector);
         DataOutputStream Output;
         try{
             Output = new DataOutputStream(To.getOutputStream());
-            Output.writeBytes("@Start:" + Send + "\n");
+            Output.writeBytes("::" + Send + "\n");
         }catch(IOException E){
             if (Log == true){
                 System.out.println("Message sending failed.");
@@ -51,9 +44,7 @@ public class TCPApi {
         }
     }
     
-    public int CreateListener(int Port,FuncStore Action){
-        listenerKey = listenerKey + 1;
-        int Key = listenerKey;
+    public void CreateListener(int Port, String Name, FuncStore Action){
         Socket Listener;
         InputStreamReader R = null;
         try{
@@ -69,35 +60,34 @@ public class TCPApi {
         }
         
         BufferedReader B = new BufferedReader(R);
-        Readers.add(B);
+        Readers.put(Name,B);
         
-        CreateListenerAction(Action,Key);
+        if (!Action.equals(null)){
+            CreateListenerAction(Name,"Main_Listener",Action);
+        }
         Timer Reader = new Timer();
+        Timers.put(Name,Reader);
         try{
-            Reader.scheduleAtFixedRate(new TimerTsk(ListenerActions.get(Key),B.readLine()),10,300);
+            Reader.scheduleAtFixedRate(new TimerTsk(ListenerActions.get(Name),B.readLine()),10,300);
         }catch(IOException E){
             if (Log == true){
                 System.out.println("Error reading line.");
             }
         }
-        return listenerKey;
     }
     
-    private void CreateListenerAction(FuncStore Action,int ListenerKey){
-        ListenerActions.get(ListenerKey).add(Action);
+    public void CreateListenerAction(String ListenerKey,String Name, FuncStore Action){
+        ListenerActions.get(ListenerKey).put(Name,Action);
     }
     
-    public void InitCProtocol(int Server){
-        CreateListener(Server,new FuncStore("Protocol"){
-            @Override
-            void Run(String Text){
-                
-            }
-        });
-        Send(Server,"@Connect?");
-        
+    public void RemoveListener(String Key){
+        Timers.remove(Key);
+        Readers.remove(Key);
     }
-   
+    
+    public void RemoveListenerAction(String Listener,String Action){
+        ListenerActions.get(Listener).remove(Action);
+    }
     
     public TCPApi(){
     }
