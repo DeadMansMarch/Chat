@@ -1,0 +1,24 @@
+
+/* @Error: 1 - HostNotFoundException;
+*/
+package chat;
+
+/**
+ *
+ * @author Liam Pierce
+ */
+public class Client {
+
+    public static void main(String[] args) {
+        TCPApi API = new TCPApi();
+        
+        API.Connection(new IP("136.167.171.151",6789));
+        API.CreateListener(6789, new FuncStore("MainListener"){
+            @Override
+            void Run(String Text){
+                System.out.println(Name);
+            }
+        });
+        
+    }
+}
