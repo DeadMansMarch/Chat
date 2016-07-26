@@ -14,45 +14,88 @@ import java.net.*;
 public class TCPApi {
     int connectionKey = 0;
     int listenerKey = 0;
-    
+    boolean Log = true;
     private List<InetAddress> Servers = new ArrayList<>();
     private List<Socket> Connections = new ArrayList<>();
     private List<BufferedReader> Readers = new ArrayList<>();
-    private List<FuncStore> ListenerActions = new ArrayList<>();
+    private List<List<FuncStore>> ListenerActions = new ArrayList<>();
     
     
     public void AddServer(InetAddress IP){
         Servers.add(IP);
     }
     
-    private int Connection(IP Host) throws IOException{
-        Connections.add(new Socket(Host.Converter(),Host.GetPort()));
-        connectionKey += 1;
+    int Connection(IP Host){
+        try{
+            Connections.add(new Socket(Host.Converter(),Host.GetPort()));
+            connectionKey += 1;
+        }catch(Exception E){
+            if (Log == true){
+                System.out.println("Connection to server: " + Host.GetIP() +
+                        " failed.");
+            }
+        }
         return connectionKey;
     }
     
-    public void Send(int ConnectionKey,String Send) throws IOException{
+    public void Send(int ConnectionKey,String Send){
         Socket To = Connections.get(ConnectionKey);
-        DataOutputStream Output = new DataOutputStream(To.getOutputStream());
-        Output.writeBytes("@Start:" + Send + "\n");
+        DataOutputStream Output;
+        try{
+            Output = new DataOutputStream(To.getOutputStream());
+            Output.writeBytes("@Start:" + Send + "\n");
+        }catch(IOException E){
+            if (Log == true){
+                System.out.println("Message sending failed.");
+            }
+        }
     }
     
-    public int CreateListener(int Port,FuncStore Action) throws IOException{
+    public int CreateListener(int Port,FuncStore Action){
         listenerKey = listenerKey + 1;
         int Key = listenerKey;
-        Socket Listener = new ServerSocket(Port).accept();
-        InputStreamReader R = new InputStreamReader(Listener.getInputStream());
-        Readers.add(new BufferedReader(R));
+        Socket Listener;
+        InputStreamReader R = null;
+        try{
+            Listener = new ServerSocket(Port).accept();
+            if (Log == true){
+                System.out.println("ServerSocket created successfully.");
+            }
+            R = new InputStreamReader(Listener.getInputStream());
+        }catch(IOException E){
+            if (Log == true){
+                System.out.println("Socket creation failed: " + E);
+            }
+        }
+        
+        BufferedReader B = new BufferedReader(R);
+        Readers.add(B);
         
         CreateListenerAction(Action,Key);
         Timer Reader = new Timer();
-       
-        Reader.schedule(new TimerTsk(ListenerActions.get(Key)),300);
+        try{
+            Reader.scheduleAtFixedRate(new TimerTsk(ListenerActions.get(Key),B.readLine()),10,300);
+        }catch(IOException E){
+            if (Log == true){
+                System.out.println("Error reading line.");
+            }
+        }
         return listenerKey;
     }
     
     private void CreateListenerAction(FuncStore Action,int ListenerKey){
-        ListenerActions.add(ListenerKey, Action);
+        ListenerActions.get(ListenerKey).add(Action);
+    }
+    
+    public void InitCProtocol(int Server){
+        CreateListener(Server,new FuncStore("Protocol"){
+            @Override
+            void Run(String Text){
+                
+            }
+        });
+        Send(Server,"@Connect?");
+        
     }
    
     
