@@ -3,7 +3,8 @@ specifically for text and images.
 *
 */
 package chat;
-import java.io.IOException;
+
+import java.io.*;
 import java.util.*;
 import java.net.*;
 
@@ -12,8 +13,13 @@ import java.net.*;
  */
 public class TCPApi {
     int connectionKey = 0;
+    int listenerKey = 0;
+    
     private List<InetAddress> Servers = new ArrayList<>();
     private List<Socket> Connections = new ArrayList<>();
+    private List<BufferedReader> Readers = new ArrayList<>();
+    private List<FuncStore> ListenerActions = new ArrayList<>();
+    
     
     public void AddServer(InetAddress IP){
         Servers.add(IP);
@@ -22,16 +28,34 @@ public class TCPApi {
     private int Connection(IP Host) throws IOException{
         Connections.add(new Socket(Host.Converter(),Host.GetPort()));
         connectionKey += 1;
-        return connectionKey + 1;
+        return connectionKey;
     }
     
-    public void Send(int ConnectionKey,String Send){
+    public void Send(int ConnectionKey,String Send) throws IOException{
         Socket To = Connections.get(ConnectionKey);
-        
-        
+        DataOutputStream Output = new DataOutputStream(To.getOutputStream());
+        Output.writeBytes("@Start:" + Send + "\n");
     }
+    
+    public int CreateListener(int Port,FuncStore Action) throws IOException{
+        listenerKey = listenerKey + 1;
+        int Key = listenerKey;
+        Socket Listener = new ServerSocket(Port).accept();
+        InputStreamReader R = new InputStreamReader(Listener.getInputStream());
+        Readers.add(new BufferedReader(R));
+        
+        CreateListenerAction(Action,Key);
+        Timer Reader = new Timer();
+       
+        Reader.schedule(new TimerTsk(ListenerActions.get(Key)),300);
+        return listenerKey;
+    }
+    
+    private void CreateListenerAction(FuncStore Action,int ListenerKey){
+        ListenerActions.add(ListenerKey, Action);
+    }
+   
     
     public TCPApi(){
-        
     }
 }
