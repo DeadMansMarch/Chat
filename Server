@@ -1,0 +1,26 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package chat;
+
+/**
+ *
+ * @author Liam Pierce
+ */
+public class Server {
+    
+    
+    public static void main(String[] args) {
+        TCPApi API = new TCPApi();
+        
+        API.CreateListener(6789, new FuncStore("MainListener"){
+            @Override
+            void Run(String Text){
+                System.out.println(Name);
+            }
+        });
+        
+    }
+}
