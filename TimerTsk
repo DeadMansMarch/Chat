@@ -1,20 +1,24 @@
-
 package chat;
 
+import java.util.List;
 import java.util.TimerTask;
 /**
  *
  * @author Liam Pierce
  */
 public class TimerTsk extends TimerTask {
-    FuncStore Method;
-    
+    List<FuncStore> Method;
+    String Text = "";
+    @Override
     public void run(){
-        Method.Run();
+        for (FuncStore K:Method){
+            K.Run(Text);
+        }
         
     }
     
-    public TimerTsk(FuncStore Method){
-        this.Method = Method;
+    public TimerTsk(List<FuncStore> Methods,String Line){
+        this.Text = Line;
+        this.Method = Methods;
     }
 }
