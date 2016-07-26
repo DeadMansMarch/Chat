@@ -7,9 +7,18 @@ package chat;
  */
 
 public class Crypt {
+    private int Key = 0;
     
+    public int GetKey(){
+        return Key;
+    }
     
-    public Crypt(int SessionKey){
+    public void SetKey(int Key){
+       this.Key = Key; 
+    }
+    
+    public Crypt(){
         
     }
 }
+
