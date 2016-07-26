@@ -1,0 +1,15 @@
+
+package chat;
+
+/**
+ *
+ * @author Liam Pierce
+ */
+
+public class Crypt {
+    
+    
+    public Crypt(int SessionKey){
+        
+    }
+}
