@@ -1,0 +1,20 @@
+
+package chat;
+
+import java.util.TimerTask;
+/**
+ *
+ * @author Liam Pierce
+ */
+public class TimerTsk extends TimerTask {
+    FuncStore Method;
+    
+    public void run(){
+        Method.Run();
+        
+    }
+    
+    public TimerTsk(FuncStore Method){
+        this.Method = Method;
+    }
+}
