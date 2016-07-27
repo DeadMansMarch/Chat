@@ -1,23 +1,23 @@
 package chat;
 
-import java.util.List;
+import java.util.HashMap;
 import java.util.TimerTask;
 /**
  *
  * @author Liam Pierce
  */
 public class TimerTsk extends TimerTask {
-    List<FuncStore> Method;
+    HashMap<String,FuncStore> Method;
     String Text = "";
     @Override
     public void run(){
-        for (FuncStore K:Method){
-            K.Run(Text);
+        for (Object K:Method.entrySet().toArray()){
+            ((FuncStore) K).Run(Text);
         }
         
     }
     
-    public TimerTsk(List<FuncStore> Methods,String Line){
+    public TimerTsk(HashMap<String,FuncStore> Methods,String Line){
         this.Text = Line;
         this.Method = Methods;
     }
