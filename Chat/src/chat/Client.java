@@ -17,21 +17,28 @@ public class Client{
     IP Server = new IP("136.167.171.151",6789);
     
     public boolean ProtocolC(){
+        System.out.println("Attempting connection to server...");
         API.Connection(Server,"Main");
+        System.out.println("Connection Init.");
         API.Send("Main","Connect?");
         
-        System.out.println("Working?");
-        API.CreateListener(6789,"", null);
-        System.out.println("Working...");
-        
+        API.CreateListener(6789,"Main", null);
+                
         API.CreateListenerAction("Main","ProtocolC",
                 new FuncStore("MainConnectionProtocol"){
             @Override
             void Run(String Text){
                 Client.Last = Text;
+                System.out.println(Text);
+                System.out.println("Text:" + Text);
                 ConnectionProtocolAssist(Text);
             }
         });
+        
+        
+        System.out.println("Working...");
+        
+        
         
         
         return false;
@@ -39,20 +46,22 @@ public class Client{
     
     private void ConnectionProtocolAssist(String K){
         Client.Last = K;
-        System.out.println("Connecting...");
+        System.out.println(K);
         switch(K){
             
-            case "::OK\n":
+            case "::OK":
                 API.Send("Main","Encrypt?");
                 break;
             
-            case "::Connected\n":
+            case "::Connected":
                 API.Send("Main", K);
                 break;
             default:
-                int Key = Integer.parseInt(K.substring(3, K.length() - 1));
+                System.out.println("Autism confirmed");
+                String Key = K.substring(1, K.length());
+                System.out.println(Key);
                 API.Send("Main","EncryptStart@Connect");
-                break; 
+                break;
         }
     }
     
@@ -66,4 +75,3 @@ public class Client{
         Chat.ProtocolC();
     }
 }
-
