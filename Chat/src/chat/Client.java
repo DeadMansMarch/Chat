@@ -17,11 +17,13 @@ public class Client{
     IP Server = new IP("136.167.171.151",6789);
     
     public boolean ProtocolC(){
+        System.out.println("Attempting connection to server...");
         API.Connection(Server,"Main");
+        System.out.println("Connection Init.");
         API.Send("Main","Connect?");
         
         System.out.println("Working?");
-        API.CreateListener(6789,"", null);
+        API.CreateListener(6789,"Main_Listener", null);
         System.out.println("Working...");
         
         API.CreateListenerAction("Main","ProtocolC",
@@ -29,6 +31,7 @@ public class Client{
             @Override
             void Run(String Text){
                 Client.Last = Text;
+                System.out.println(Text);
                 ConnectionProtocolAssist(Text);
             }
         });

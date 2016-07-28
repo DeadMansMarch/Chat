@@ -19,19 +19,24 @@ public class TCPApi {
     final private HashMap<String,Timer> Timers = new HashMap<>();
     final private HashMap<String,HashMap<String,FuncStore>> ListenerActions = new HashMap<>();
     
-    public void Connection(IP Host,String Name){
+    public boolean Connection(IP Host,String Name){
+        
         try{
+            System.out.print("Trying :");
             Connections.put(Name,new Socket(Host.Converter(),Host.GetPort()));
             if (Log == true){
-                System.out.println("Connection Init Successful");
+                System.out.println(" Connection Init Successful");
             }
             
         }catch(Exception E){
             if (Log == true){
-                System.out.println("Connection to server: " + Host.GetIP() +
+                System.out.print(" Connection to server: " + Host.GetIP() +
                         " failed.");
+                return false;
             }
         }
+        
+        return true;
     }
     
     public void Send(String Connector,String Send){
@@ -65,30 +70,34 @@ public class TCPApi {
                 System.out.println("Socket creation failed: " + E);
             }
         }
-        System.out.println("k");
         
         
         BufferedReader B = new BufferedReader(R);
         Readers.put(Name,B);
         
-        if (!Action.equals(null)){
+        if (!(Action == null)){
             CreateListenerAction(Name,"Main_Listener",Action);
+        }else{
+            CreateNilActionSet(Name,"Main_Listener");
         }
+        
         Timer Reader = new Timer();
-        System.out.println("Ok");
         Timers.put(Name,Reader);
         try{
-            Reader.scheduleAtFixedRate(new TimerTsk(ListenerActions.get(Name),B.readLine()),10,300);
-        }catch(IOException E){
+            Reader.scheduleAtFixedRate(new TimerTsk(ListenerActions.get(Name),B,Listener),10,300);
+        }catch(Exception E){
             if (Log == true){
-                System.out.println("Error reading line.");
+                System.out.println("Error reading line : " + E);
             }
         }
-        System.out.println("OKKKK");
     }
     
     public void CreateListenerAction(String ListenerKey,String Name, FuncStore Action){
         ListenerActions.get(ListenerKey).put(Name,Action);
+    }
+    
+    public void CreateNilActionSet(String ListenerKey,String Name){
+        ListenerActions.put(ListenerKey,new HashMap<>());
     }
     
     public void RemoveListener(String Key){
@@ -96,8 +105,8 @@ public class TCPApi {
         Readers.remove(Key);
     }
     
-    public void RemoveListenerAction(String Listener,String Action){
-        ListenerActions.get(Listener).remove(Action);
+    public void RemoveListenerAction(String ListenerKey,String Action){
+        ListenerActions.get(ListenerKey).remove(Action);
     }
     
     public TCPApi(){
