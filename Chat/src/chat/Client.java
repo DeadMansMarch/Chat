@@ -9,12 +9,11 @@ package chat;
  */
 public class Client{
     static String Last;
-    TCPApi API = new TCPApi();
-    Crypt EnDe;
+    static TCPApi API = new TCPApi();
+    static Crypt EnDe;
+    static int Key = 0;
     
-    int Key = 0;
-    
-    IP Server = new IP("136.167.171.151",6789);
+    final private IP Server = new IP("136.167.171.151",6789);
     
     public boolean ProtocolC(){
         System.out.println("Attempting connection to server...");
@@ -22,18 +21,20 @@ public class Client{
         System.out.println("Connection Init.");
         API.Send("Main","Connect?");
         
-        API.CreateListener(6789,"Main", null);
-                
         API.CreateListenerAction("Main","ProtocolC",
                 new FuncStore("MainConnectionProtocol"){
             @Override
             void Run(String Text){
                 Client.Last = Text;
                 System.out.println(Text);
-                System.out.println("Text:" + Text);
+                System.out.println("Text:" + Text + "!!!");
                 ConnectionProtocolAssist(Text);
             }
         });
+        
+        API.CreateListener(6789,"Main", null);
+                
+        
         
         
         System.out.println("Working...");
@@ -50,6 +51,7 @@ public class Client{
         switch(K){
             
             case "::OK":
+                System.out.println("OK");
                 API.Send("Main","Encrypt?");
                 break;
             
@@ -57,21 +59,38 @@ public class Client{
                 API.Send("Main", K);
                 break;
             default:
-                System.out.println("Autism confirmed");
-                String Key = K.substring(1, K.length());
-                System.out.println(Key);
-                API.Send("Main","EncryptStart@Connect");
+                System.out.println("WHY");
+                if (Key != 0 && EnDe.Decrypt(K.substring(2), Key).equals("SessionStart")){
+                    API.RemoveListener("Main");
+                }else{
+                    Key = Integer.parseInt(K.substring(2));
+                    System.out.println(Key);
+                    EnSend("Main","@Start");
+                }
                 break;
         }
     }
     
-    public void EnSend(String Connection,String Text){
+    static void EnSend(String Connection,String Text){
+        System.out.println(Key);
         API.Send(Connection,EnDe.Encrypt(Text, Key));
     }
     
     public static void main(String[] args) {
+        Thread K = new Thread(new Runnable(){
+            @Override
+            public void run(){
+                UI K = new UI();
+            }
+        },"UI Cancer");
+        
+        K.start();
         Client Chat = new Client();
-        Chat.EnDe = new Crypt();
+        Client.EnDe = new Crypt();
         Chat.ProtocolC();
+    }
+    
+    public Client(){
+        
     }
 }

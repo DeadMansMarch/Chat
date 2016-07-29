@@ -45,7 +45,7 @@ public class TCPApi {
             Output = new DataOutputStream(To.getOutputStream());
             Output.writeBytes("::" + Send + "\n");
             Output.flush();
-            System.out.println("Sending Completed.");
+            System.out.println("Sending Completed :" + Send);
         }catch(IOException E){
             if (Log == true){
                 System.out.println("Message sending failed.");
@@ -57,6 +57,7 @@ public class TCPApi {
         Socket Listener = null;
         InputStreamReader R = null;
         try{
+            System.out.println("Working...");
             Listener = new ServerSocket(Port).accept();
             if (Log == true){
                 System.out.println("ServerSocket created successfully.");
@@ -68,19 +69,16 @@ public class TCPApi {
             }
         }
         
+        if (!ListenerActions.containsKey(Name)){
+            ListenerActions.put(Name, new HashMap<>());
+        }
         
         BufferedReader B = new BufferedReader(R);
         
-        if (!(Action == null)){
-            CreateListenerAction(Name,"Main_Listener",Action);
-        }else{
-            CreateNilActionSet(Name,"Main_Listener");
-        }
         
         Timer Reader = new Timer();
         Timers.put(Name,Reader);
         try{
-            System.out.println("Wow");
             Reader.scheduleAtFixedRate(new TimerTsk(ListenerActions.get(Name),B,Listener),10,300);
         }catch(Exception E){
             if (Log == true){
@@ -92,9 +90,10 @@ public class TCPApi {
     public void CreateListenerAction(String ListenerKey,String Name, FuncStore Action){
         HashMap<String,FuncStore> Save = ListenerActions.get(ListenerKey);
         if (Save == null){
-            ListenerActions.put(ListenerKey,new HashMap<String,FuncStore>());
+            ListenerActions.put(ListenerKey,new HashMap<>());
         }
         ListenerActions.get(ListenerKey).put(Name,Action);
+        System.out.println("Done");
     }
     
     public void CreateNilActionSet(String ListenerKey,String Name){
@@ -103,6 +102,7 @@ public class TCPApi {
     
     public void RemoveListener(String Key){
         Timers.remove(Key);
+        ListenerActions.remove(Key);
     }
     
     public void RemoveListenerAction(String ListenerKey,String Action){

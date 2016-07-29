@@ -16,15 +16,20 @@ public class TimerTsk extends TimerTask {
     @Override
     public void run(){
         try{
+            System.out.println("Try 1");
             String Current = B.readLine();
-            System.out.println(Current);
+            System.out.println("Text: " + Current);
             if (!Current.equals(Last)){
+                String _IP = Connection.getInetAddress().toString().substring(1);
+                if (Server.IsServer){
+                    System.out.println(_IP);
+                    Server.CheckIP(_IP);
+                }
+                System.out.println(Method.values().size());
                 for (Object K:Method.values()){
-                    if (true){
-                        System.out.println(Server.IsServer);
+                    if (!(K == null)){
+                        System.out.println(Connection);
                         if (Server.IsServer){
-                            String _IP = Connection.getInetAddress().toString();
-                            Server.CheckIP(_IP);
                             ((FuncStore) K).Run(Current,_IP);
                         }else{
                             ((FuncStore) K).Run(Current);
@@ -37,14 +42,11 @@ public class TimerTsk extends TimerTask {
         }catch(Exception E){
             System.out.println(E);
         }
-        
-        if (Server.IsServer == true){
-            Server.CheckIP(Connection.getInetAddress().toString());
-        }
     }
     
     public TimerTsk(HashMap<String,FuncStore> Methods,BufferedReader B,Socket Listener){
         this.Method = Methods;
+        System.out.println(Methods.values().size());
         this.B = B;
         this.Connection = Listener;
     }
