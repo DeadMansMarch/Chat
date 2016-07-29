@@ -17,14 +17,17 @@ public class TimerTsk extends TimerTask {
     public void run(){
         try{
             String Current = B.readLine();
-            System.out.println(Current);
+            System.out.println("Text: " + B);
             if (!Current.equals(Last)){
+                String _IP = Connection.getInetAddress().toString().substring(1);
+                if (Server.IsServer){
+                    System.out.println(_IP);
+                    Server.CheckIP(_IP);
+                }
                 for (Object K:Method.values()){
-                    if (true){
-                        System.out.println(Server.IsServer);
+                    if (!(K == null)){
+                        System.out.println(Connection);
                         if (Server.IsServer){
-                            String _IP = Connection.getInetAddress().toString();
-                            Server.CheckIP(_IP);
                             ((FuncStore) K).Run(Current,_IP);
                         }else{
                             ((FuncStore) K).Run(Current);
@@ -36,10 +39,6 @@ public class TimerTsk extends TimerTask {
             }
         }catch(Exception E){
             System.out.println(E);
-        }
-        
-        if (Server.IsServer == true){
-            Server.CheckIP(Connection.getInetAddress().toString());
         }
     }
     

@@ -57,7 +57,6 @@ public class Client{
                 API.Send("Main", K);
                 break;
             default:
-                System.out.println("Autism confirmed");
                 String Key = K.substring(1, K.length());
                 System.out.println(Key);
                 API.Send("Main","EncryptStart@Connect");
@@ -68,10 +67,14 @@ public class Client{
     public void EnSend(String Connection,String Text){
         API.Send(Connection,EnDe.Encrypt(Text, Key));
     }
-    
+    /*
     public static void main(String[] args) {
         Client Chat = new Client();
         Chat.EnDe = new Crypt();
         Chat.ProtocolC();
+    }
+*/
+    public Client(){
+        
     }
 }
