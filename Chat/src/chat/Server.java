@@ -6,78 +6,74 @@
 package chat;
 
 import java.util.*;
-import java.net.Socket;
+import java.net.*;
+
 /**
  *
  * @author Liam Pierce
  */
 public class Server {
     static boolean IsServer = false;
-    static HashMap<String,Integer> IpToConnection = new HashMap<>();
-    private static TCPApi API = new TCPApi();
-    private Crypt EnDe = new Crypt();
-    private Random R = new Random();
+    private int Key = 0;
+    private Socket Connection;
+    private String IP;
     
-    HashMap<String,Integer> Keys = new HashMap<>();
-    
-    public static boolean CheckIP(String IP){
-        if (!IpToConnection.containsKey(IP)){
-            return true;
-        }else{
-            return false;
-        }
+    public void Connect(){
+        System.out.println("Working: Connection.");
+        Connector.IpToConnection.put(IP,1);
+        Connector.API.Connection(new IP(IP,6789),IP);
     }
     
-    public static void AddIPConnection(String IPv4){
-        IpToConnection.put(IPv4,0);
-        API.Connection(new IP(IPv4,6789),IPv4);
-    }
-    
-    public static void main(String[] args) {
-        IsServer = true;
-        Server Chat = new Server();
-        Chat.EnDe = new Crypt();
+    public Server(Socket Connection){
+        this.Connection = Connection;
+        this.IP = Connection.getInetAddress().toString();
+        Key = Connector.RandCreator.nextInt(500);
+        Connect();
     }
     
     public boolean ProtocolC(){
-        API.CreateListener(6789,"Main", null);
-        
-        API.CreateListenerAction("Main","ProtocolC",
-                new FuncStore("MainConnectionProtocol"){
+        Connector.API.CreateServerListener(Connection,IP, new FuncStore("MainConnectionProtocol"){
             @Override
-            void Run(String Text,String IP){
+            void Run(String Text){
                 Client.Last = Text;
-                System.out.println(Text);
-                ConnectionProtocolAssist(Text,IP);
-            }
-        });
+                System.out.println("Text : " + Text);
+                ConnectionProtocolAssist(Text);
+            });
+
         
         return false;
     }
     
-    private void ConnectionProtocolAssist(String K,String IP){
-        Client.Last = K;
-        
+    private void ConnectionProtocolAssist(String K){
+       
         switch(K){
             
-            case "::Connect?\n":
-                API.Send(IP,"OK");
+            
+            case "::Connect?":
+                Connector.API.Send(IP,"OK");
                 break;
             
-            case "::Encrypt?\n":
-                int NewKey = R.nextInt(256);
-                API.Send(IP,Integer.toString(NewKey));
-                Keys.put(IP, NewKey);
-                break;
-            case "::EncryptStart@Connect\n":
-                EnSend(IP,"Connection_Started",IP);
+            case "::Encrypt?":
+                Connector.API.Send(IP,Integer.toString(Key));
                 break;
             default:
+                if (Connector.EnDe.Decrypt(K.substring(2), Key).equals("@Start")){
+                    EnSend(IP,"SessionStart",IP);
+                }else if (Connector.EnDe.Decrypt(K.substring(2),Key).equals("SessionStart")){
+                    Connector.API.RemoveListenerAction("Main", "ProtocolC");
+                    Connector.API.CreateListenerAction("Main", "Communication", new FuncStore("Connection"){
+                        @Override
+                        public void Run(String message,String IP){
+                            String DeMessage = Connector.EnDe.Decrypt(message.substring(2),Key);
+                            System.out.println(DeMessage);
+                        }
+                    });
+                }
                 break; 
         }
     }
     
     public void EnSend(String Connection,String Text,String IP){
-        API.Send(Connection,EnDe.Encrypt(Text, Keys.get(IP)));
+        Connector.API.Send(Connection,Connector.EnDe.Encrypt(Text, Key));
     }
 }
