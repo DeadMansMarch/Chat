@@ -25,10 +25,15 @@ public class Server {
     }
     
     public Server(Socket Connection){
-        this.Connection = Connection;
-        this.IP = Connection.getInetAddress().toString();
-        Key = Connector.RandCreator.nextInt(500);
-        Connect();
+        Thread ServerThread = new Thread(new Runnable(){
+            this.Connection = Connection;
+            this.IP = Connection.getInetAddress().toString();
+            Key = Connector.RandCreator.nextInt(500);
+            Connect();
+        },"ServerThread");
+        
+        ServerThread.start();
+        
     }
     
     public boolean ProtocolC(){
