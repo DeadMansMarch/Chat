@@ -26,16 +26,20 @@ public class Connector {
     }
     
     public static void main(String[] args) {
+        System.out.println("Initiating...");
         Connector C = new Connector();
+        
+        System.out.println("Initiated server...");
         
         Thread ConnectionThread = new Thread(new Runnable(){
             @Override
             public void run(){
                 while (true){
+                    System.out.println("Waiting for connection...");
                     Socket New = API.GetServerSocket(6789);
-                    String IP = New.getInetAddress().toString();
+                    String IP = New.getInetAddress().toString().substring(1);
+                    System.out.println(IP);
                     Servers.put(IP,new Server(New));
-                    
                 }
             }
         },"Connector");
