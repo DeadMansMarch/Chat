@@ -5,16 +5,88 @@
  */
 package chat;
 
+import java.util.*;
+import java.net.*;
+
 /**
  *
  * @author Liam Pierce
  */
 public class Server {
-    TCPApi API = new TCPApi();
+    static boolean IsServer = false;
+    private int Key = 0;
+    private Socket Connection;
+    private String IP;
     
-    public static void main(String[] args) {
-        Client Chat = new Client();
-        Chat.EnDe = new Crypt();
+    public void Connect(){
+        System.out.println("Working: Connection for IP: " + IP);
+        Connector.IpToConnection.put(IP,1);
+        Connector.API.Connection(new IP(IP,6789),IP);
+    }
+    
+    public Server(Socket Connection){
+        this.Connection = Connection;
+        this.IP = Connection.getInetAddress().toString().substring(1);
+        Thread ServerThread = new Thread(new Runnable(){
+            @Override
+            public void run(){
+                
+                Key = Connector.RandCreator.nextInt(500);
+                
+                ProtocolC();
+            }
+            
+        },"ServerThread");
         
+        ServerThread.start();
+        
+    }
+    
+    public boolean ProtocolC(){
+        Connector.API.CreateServerListener(Connection,IP, new FuncStore("MainConnectionProtocol"){
+            @Override
+            void Run(String Text){
+                Client.Last = Text;
+                System.out.println("Text : " + Text);
+                ConnectionProtocolAssist(Text);
+            }
+        });
+        
+        
+        return false;
+    }
+    
+    private void ConnectionProtocolAssist(String K){
+       
+        switch(K){
+            
+            
+            case "::Connect?":
+                Connect();
+                Connector.API.Send(IP,"OK");
+                break;
+            
+            case "::Encrypt?":
+                Connector.API.Send(IP,Integer.toString(Key));
+                break;
+            default:
+                if (Connector.EnDe.Decrypt(K.substring(2), Key).equals("@Start")){
+                    EnSend(IP,"SessionStart",IP);
+                }else if (Connector.EnDe.Decrypt(K.substring(2),Key).equals("SessionStart")){
+                    Connector.API.RemoveListenerAction("Main", "ProtocolC");
+                    Connector.API.CreateListenerAction("Main", "Communication", new FuncStore("Connection"){
+                        @Override
+                        public void Run(String message,String IP){
+                            String DeMessage = Connector.EnDe.Decrypt(message.substring(2),Key);
+                            System.out.println(DeMessage);
+                        }
+                    });
+                }
+                break; 
+        }
+    }
+    
+    public void EnSend(String Connection,String Text,String IP){
+        Connector.API.Send(Connection,Connector.EnDe.Encrypt(Text, Key));
     }
 }
