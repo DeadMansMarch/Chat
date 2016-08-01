@@ -4,9 +4,14 @@
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
             <file>file:/C:/Users/Camper/Documents/NetBeansProjects/Chat/src/chat/Server.java</file>
+            <file>file:/C:/Users/Camper/Documents/NetBeansProjects/Chat/src/chat/Crypt.java</file>
             <file>file:/C:/Users/Camper/Documents/NetBeansProjects/Chat/src/chat/TCPApi.java</file>
             <file>file:/C:/Users/Camper/Documents/NetBeansProjects/Chat/src/chat/Connector.java</file>
+            <file>file:/C:/Users/Camper/Documents/NetBeansProjects/Chat/src/chat/Client.java</file>
             <file>file:/C:/Users/Camper/Documents/NetBeansProjects/Chat/src/chat/TimerTsk.java</file>
+            <file>file:/C:/Users/Camper/Documents/NetBeansProjects/Chat/src/chat/UI.java</file>
+            <file>file:/C:/Users/Camper/Documents/NetBeansProjects/Chat/src/chat/FuncStore.java</file>
+            <file>file:/C:/Users/Camper/Documents/NetBeansProjects/Chat/src/chat/IP.java</file>
         </group>
     </open-files>
 </project-private>

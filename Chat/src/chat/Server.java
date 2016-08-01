@@ -18,6 +18,7 @@ public class Server {
     private Socket Connection;
     private String IP;
     
+    
     public void Connect(){
         System.out.println("Working: Connection for IP: " + IP);
         Connector.IpToConnection.put(IP,1);
@@ -38,6 +39,7 @@ public class Server {
             
         },"ServerThread");
         
+        
         ServerThread.start();
         
     }
@@ -47,7 +49,8 @@ public class Server {
             @Override
             void Run(String Text){
                 Client.Last = Text;
-                System.out.println("Text : " + Text);
+                System.out.println("Text ::: " + Text);
+                
                 ConnectionProtocolAssist(Text);
             }
         });
@@ -72,15 +75,18 @@ public class Server {
             default:
                 if (Connector.EnDe.Decrypt(K.substring(2), Key).equals("@Start")){
                     EnSend(IP,"SessionStart",IP);
-                }else if (Connector.EnDe.Decrypt(K.substring(2),Key).equals("SessionStart")){
-                    Connector.API.RemoveListenerAction("Main", "ProtocolC");
-                    Connector.API.CreateListenerAction("Main", "Communication", new FuncStore("Connection"){
+                    System.out.println("@Start");
+                    Connector.API.RemoveListenerAction(IP, "Main_Listener");
+                    Connector.API.CreateListenerAction(IP, "Communication", new FuncStore("Connection"){
                         @Override
-                        public void Run(String message,String IP){
-                            String DeMessage = Connector.EnDe.Decrypt(message.substring(2),Key);
-                            System.out.println(DeMessage);
+                        public void Run(String Message){
+                            String DeMessage = Connector.EnDe.Decrypt(Message.substring(2),Key);
+                            System.out.println("Message: " + DeMessage);
+                            Connector.SendAll(IP,DeMessage);
+                            
                         }
                     });
+                    Connector.CreateDefaultConnectionset(IP);
                 }
                 break; 
         }

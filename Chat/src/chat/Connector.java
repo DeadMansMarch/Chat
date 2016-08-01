@@ -20,6 +20,42 @@ public class Connector {
     
     static HashMap<String,Integer> IpToConnection = new HashMap<>();
     
+    
+    private static HashMap<String,HashMap<String,Integer>> Connections = new HashMap<>();
+    
+    public static HashMap<String,HashMap<String,Integer>> getConnections(){
+        return Connections;
+    }
+    
+    public static void addConnection(String MainIP,String IP){
+        Connections.get(MainIP).put(IP,1);
+    }
+    
+    public static void removeConnection(String IP){
+        Connections.remove(IP);
+    }
+    
+    public static void CreateDefaultConnectionset(String MainIP){
+        Connections.put(MainIP,new HashMap<>());
+        Connections.forEach((String I,Object B) -> {
+            if (!I.equals(MainIP)){
+                addConnection(MainIP,I);
+            }
+        });
+    }
+    
+    public static void SendAt(String IP,String Text){
+        Servers.get(IP).EnSend(IP, Text, IP);
+    }
+    
+    public static void SendAll(String CurrentIP,String Text){
+        Connections.forEach((String IP,Object B) -> {
+            if (!IP.equals(CurrentIP)){
+                Servers.get(IP).EnSend(IP,Text,IP);
+            }
+        });
+    }
+    
     public Connector(){
         Server.IsServer = true;
         
@@ -38,7 +74,6 @@ public class Connector {
                     System.out.println("Waiting for connection...");
                     Socket New = API.GetServerSocket(6789);
                     String IP = New.getInetAddress().toString().substring(1);
-                    System.out.println(IP);
                     Servers.put(IP,new Server(New));
                 }
             }
