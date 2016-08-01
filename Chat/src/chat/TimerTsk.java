@@ -1,7 +1,5 @@
 package chat;
 
-import java.io.BufferedReader;
-import java.net.Socket;
 import java.util.HashMap;
 import java.util.TimerTask;
 /**
@@ -10,42 +8,17 @@ import java.util.TimerTask;
  */
 public class TimerTsk extends TimerTask {
     HashMap<String,FuncStore> Method;
-    BufferedReader B;
-    String Last = "";
-    Socket Connection;
+    String Text = "";
     @Override
     public void run(){
-        try{
-            System.out.println("Try 1");
-            String Current = B.readLine();
-            System.out.println("Text: " + Current);
-            if (!Current.equals(Last)){
-                String _IP = Connection.getInetAddress().toString().substring(1);
-                if (Server.IsServer){
-                    System.out.println(_IP);
-                }
-                System.out.println(Method.values().size());
-                for (Object K:Method.values()){
-                    if (!(K == null)){
-                        System.out.println(Connection);
-                        if (Server.IsServer){
-                            ((FuncStore) K).Run(Current,_IP);
-                        }else{
-                            ((FuncStore) K).Run(Current);
-                        }
-                    }
-                }
-            }else{
-                Last = Current;
-            }
-        }catch(Exception E){
-            System.out.println(E);
+        for (Object K:Method.entrySet().toArray()){
+            ((FuncStore) K).Run(Text);
         }
+        
     }
     
-    public TimerTsk(HashMap<String,FuncStore> Methods,BufferedReader B,Socket Listener){
+    public TimerTsk(HashMap<String,FuncStore> Methods,String Line){
+        this.Text = Line;
         this.Method = Methods;
-        this.B = B;
-        this.Connection = Listener;
     }
 }

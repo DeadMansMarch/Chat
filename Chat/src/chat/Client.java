@@ -9,101 +9,55 @@ package chat;
  */
 public class Client{
     static String Last;
-    static TCPApi API = new TCPApi();
-    static Crypt EnDe;
-    static int Key = 0;
-    static UI UI;
+    TCPApi API = new TCPApi();
+    Crypt EnDe;
+    String User = "Guest";
+    String Pass = null;
+    int Key = 1;
     
-    final private IP Server = new IP("136.167.171.151",6789);
-    
-    public boolean ProtocolC(){
-        System.out.println("Attempting connection to server...");
-        API.Connection(Server,"Main");
-        System.out.println("Connection Init.");
-        API.Send("Main","Connect?");
+    private boolean ProtocolC(){
+        API.Connection(new IP("136.167.171.151",6789),"Main");
+        API.CreateListener(6789,"", null);
         
         API.CreateListenerAction("Main","ProtocolC",
                 new FuncStore("MainConnectionProtocol"){
             @Override
             void Run(String Text){
                 Client.Last = Text;
-                System.out.println(Text);
-                System.out.println("Text:" + Text + "!!!");
                 ConnectionProtocolAssist(Text);
             }
         });
-        
-        API.CreateListener(6789,"Main", null);
-                
-        
-        
-        
-        System.out.println("Working...");
-        
-        
-        
-        
         return false;
+    }
+    
+    private void EnSend(String Socket,String Message){
+        API.Send(Socket,EnDe.Encrypt(Message,Key));
     }
     
     private void ConnectionProtocolAssist(String K){
         Client.Last = K;
-        System.out.println(K);
+        
         switch(K){
             
-            case "::OK":
-                System.out.println("OK");
+            case "::OK\n":
                 API.Send("Main","Encrypt?");
                 break;
             
-            case "::Connected":
-                API.Send("Main", K);
+            case "::Connected\n":
+                EnSend("Main", "Handled.");
                 break;
+            case "Information?":
+                EnSend("Main",User);
             default:
-                System.out.println("WHY");
-                if (Key != 0 && EnDe.Decrypt(K.substring(2), Key).equals("SessionStart")){
-                    EnSend("Main","SessionStart");
-                    API.RemoveListenerAction("Main","ProtocolC");
-                    API.CreateListenerAction("Main","Communication",new FuncStore("Connection"){
-                        @Override
-                        public void Run(String Message){
-                            String Demessage = EnDe.Decrypt(Message.substring(2), Key);
-                            String[] SplitMessage = Demessage.split(":");
-                            Client.UI.appendText(SplitMessage[0],SplitMessage[1]);
-                        }
-                    });
-                }else{
-                    Key = Integer.parseInt(K.substring(2));
-                    System.out.println(Key);
-                    EnSend("Main","@Start");
-                }
+                Key = Integer.parseInt(K.substring(3, K.length() - 1));
                 break;
         }
     }
     
-    static void EnSend(String Connection,String Text){
-        System.out.println(Key);
-        API.Send(Connection,EnDe.Encrypt(Text, Key));
-    }
-    
     public static void main(String[] args) {
         Client Chat = new Client();
-        
-        Thread K = new Thread(new Runnable(){
-            @Override
-            public void run(){
-                Client.UI = new UI();
-            }
-        },"UI Cancer");
-        
-        K.start();
-        
-        
-        Client.EnDe = new Crypt();
-        Chat.ProtocolC();
-    }
-    
-    public Client(){
-        
+        Chat.EnDe = new Crypt();
+        String K = Chat.EnDe.Decrypt(Chat.EnDe.Encrypt("StraightUpCancer", 200), 200);
+        System.out.println("@Done" + K + "-");
     }
 }
