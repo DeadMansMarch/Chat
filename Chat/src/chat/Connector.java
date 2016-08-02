@@ -71,6 +71,13 @@ public class Connector {
         });
     }
     
+    public void sendConnectionset(String IP,String Text){
+        Connections.get(IP).forEach((String IPc,Integer B) -> {
+            Servers.get(IPc).enSend(IPc,Text,IPc);
+        }
+        
+    }
+    
     //Constructor.
     public Connector(){
         Server.IsServer = true;
