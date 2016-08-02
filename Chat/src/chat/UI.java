@@ -213,7 +213,7 @@ public class UI extends javax.swing.JFrame {
         jTextField1.setText("");
         jTextArea1.append(Name + ": " + Text);
         jTextArea1.append("\n");
-        Client.EnSend("Main",Name + ":" + Text);
+        Client.enSend("Main",Name + ":" + Text);
     }
     
     

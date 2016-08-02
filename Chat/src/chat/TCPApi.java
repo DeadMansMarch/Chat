@@ -20,14 +20,11 @@ public class TCPApi {
     final private HashMap<String,HashMap<String,FuncStore>> ListenerActions = new HashMap<>();
     
     public boolean Connection(IP Host,String Name){
-        
         try{
-            System.out.print("Trying :");
             Connections.put(Name,new Socket(Host.Converter(),Host.GetPort()));
             if (Log == true){
                 System.out.println(" Connection Init Successful");
             }
-            
         }catch(Exception E){
             if (Log == true){
                 System.out.print(" Connection to server: " + Host.GetIP() +

@@ -18,24 +18,12 @@ public class TimerTsk extends TimerTask {
     @Override
     public void run(){
         try{
-            System.out.println("Try 1");
             String Current = B.readLine();
-            System.out.println("Text: " + Current);
             if (!Current.equals(Last)){
-                String _IP = Connection.getInetAddress().toString().substring(1);
-                if (Server.IsServer){
-                    System.out.println(_IP);
-                }
-                System.out.println(Method.values().size());
                 for (Object K:Method.values()){
                     System.out.println(K);
-                    if (!(K == null)){
-                        System.out.println("Running");
-                        ((FuncStore) K).Run(Current);
-                    }
+                    ((FuncStore) K).Run(Current);
                 }
-            }else{
-                Last = Current;
             }
         }catch(Exception E){
             System.out.println(E);
