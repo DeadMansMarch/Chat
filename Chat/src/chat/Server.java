@@ -14,79 +14,83 @@ import java.net.*;
  */
 public class Server {
     static boolean IsServer = false;
-    private int Key = 0;
-    private Socket Connection;
-    private String IP;
     
-    public void Connect(){
-        System.out.println("Working: Connection for IP: " + IP);
-        Connector.IpToConnection.put(IP,1);
+    private int Key = 0;
+    private final Socket Connection;
+    private final String IP;
+    
+    //Connects server object to given client.
+    public void connect(){
+        System.out.println("Creating new connection to " + IP);
         Connector.API.Connection(new IP(IP,6789),IP);
     }
     
+    //Starts connections.
     public Server(Socket Connection){
         this.Connection = Connection;
         this.IP = Connection.getInetAddress().toString().substring(1);
+        
+        //Runs connection protocol while allowing connector to continue without wait.
         Thread ServerThread = new Thread(new Runnable(){
             @Override
             public void run(){
-                
                 Key = Connector.RandCreator.nextInt(500);
-                
-                ProtocolC();
+                protocolC();
             }
-            
         },"ServerThread");
+        
         
         ServerThread.start();
         
     }
     
-    public boolean ProtocolC(){
+    //Connection protocol.
+    public boolean protocolC(){
         Connector.API.CreateServerListener(Connection,IP, new FuncStore("MainConnectionProtocol"){
             @Override
             void Run(String Text){
-                Client.Last = Text;
-                System.out.println("Text : " + Text);
-                ConnectionProtocolAssist(Text);
+                connectionProtocolAssist(Text);
             }
         });
-        
-        
         return false;
     }
     
-    private void ConnectionProtocolAssist(String K){
-       
+    //A protocol to make sure that all connecting clients are meant to connect and
+    //have all data that it needs.
+    private void connectionProtocolAssist(String K){
         switch(K){
-            
-            
             case "::Connect?":
-                Connect();
+                connect();
                 Connector.API.Send(IP,"OK");
                 break;
-            
             case "::Encrypt?":
                 Connector.API.Send(IP,Integer.toString(Key));
                 break;
             default:
                 if (Connector.EnDe.Decrypt(K.substring(2), Key).equals("@Start")){
-                    EnSend(IP,"SessionStart",IP);
-                }else if (Connector.EnDe.Decrypt(K.substring(2),Key).equals("SessionStart")){
-                    Connector.API.RemoveListenerAction("Main", "ProtocolC");
-                    Connector.API.CreateListenerAction("Main", "Communication", new FuncStore("Connection"){
+                    //Tells client to reset actions.
+                    enSend(IP,"SessionStart");
+                    
+                    //Reset protocol action to work for messenger.
+                    Connector.API.RemoveListenerAction(IP, "Main_Listener");
+                    Connector.API.CreateListenerAction(IP, "Communication", new FuncStore("Connection"){
                         @Override
-                        public void Run(String message,String IP){
-                            String DeMessage = Connector.EnDe.Decrypt(message.substring(2),Key);
-                            System.out.println(DeMessage);
+                        public void Run(String Message){
+                            String DeMessage = Connector.EnDe.Decrypt(Message.substring(2),Key);
+                            Connector.API.Log("Message: " + DeMessage);
+                            Connector.sendAll(IP,DeMessage);
                         }
                     });
+                    
+                    //Connects client to chat relay.
+                    Connector.createDefaultConnectionset(IP);
                 }
                 break; 
         }
     }
     
-    public void EnSend(String Connection,String Text,String IP){
+    //Sends encrypted messeges.
+    public void enSend(String Connection,String Text){
         Connector.API.Send(Connection,Connector.EnDe.Encrypt(Text, Key));
     }
 }
