@@ -6,149 +6,179 @@
 package chat;
 
 import java.util.*;
-import java.net.*;
+import java.net.Socket;
 
 /**
  *
- * @author Liam Pierce
+ * @author Liam Pierce  
  */
 public class Server {
+    public static boolean IsServer = false;
+    public static TCPApi API;
+    public static Random RandCreator = new Random();
+    public static Crypt EnDe = new Crypt();
+    private static HashMap<String,Connector> Servers = new HashMap<>();
+    private static HashMap<String,HashMap<String,Integer>> Connections = new HashMap<>();
+    private static HashMap<String,String> NameMap = new HashMap<>();
+    private static String Password = "";
     
-    private int Key = 0;
-    private final Socket Connection;
-    private final String IP;
+    //Compares a string with the password of the server.
+    public static boolean CompareStrings(String A){
+        return A.equals(Password);
+    }
     
-    //Connects server object to given client.
+    //Sets the server's password. This is for the server UI.
+    public static void setPassword(String Password){
+        Server.Password = Password;
+    }
     
-    public void Close(){
-        try{
-            Connection.close();
-        }catch(Exception E){
-            
+    //Return map of all connections.
+    public static HashMap<String,HashMap<String,Integer>> getConnections(){
+        return Connections;
+    }
+    
+    //Get assigned name for IP.
+    public static String getName(String IP,boolean ReturnIP){
+        
+        if (NameMap.containsKey(IP)){
+            return NameMap.get(IP);
         }
-        
-        TestConnections();
+        if (ReturnIP){
+            return IP;
+        }
+        return "";
     }
     
-    public void connect(){
-        System.out.println("Creating new connection to " + IP);
-        Connector.API.Connection(new IP(IP,6789),IP);
+    //Returns mapped name for IP.
+    //This is a basic reroute function for a missing argument.
+    public static String getName(String IP){
+        return getName(IP,false);
     }
     
-    //Starts connections.
-    public Server(Socket Connection){
-        this.Connection = Connection;
-        this.IP = Connection.getInetAddress().toString().substring(1);
-        
-        //Runs connection protocol while allowing connector to continue without wait.
-        Thread ServerThread = new Thread(new Runnable(){
-            @Override
-            public void run(){
-                Key = Connector.RandCreator.nextInt(500);
-                protocolC();
-            }
-        },"ServerThread");
-        
-        
-        ServerThread.start();
-        
+    //Gets the IP for a connection given a name.
+    public static String getIP(String Name){
+        String IP = "";
+        for (Map.Entry<String, String> NameSet : NameMap.entrySet()) {
+             if (NameSet.getValue().equals(Name)){
+                 IP = NameSet.getKey();
+                 break;
+             }
+        }
+        return IP;
     }
     
-    //Connection protocol.
-    public boolean protocolC(){
-        Connector.API.CreateServerListener(Connection,IP, new FuncStore("MainConnectionProtocol"){
-            @Override
-            void Run(String Text){
-                connectionProtocolAssist(Text);
+    //Assign name for given IP.
+    public static void setName(String IP, String Name){
+        NameMap.put(IP,Name);
+    }
+    
+    //Changes connectionset to have only one connection.
+    public static void OneConnection(String MainIP,String IP){
+        Connections.get(MainIP).clear();
+        Connections.get(MainIP).put(IP,1);
+    }
+    
+    //Log an IP for sending.
+    public static void addConnection(String MainIP,String IP){
+        Connections.get(MainIP).put(IP,1);
+    }
+    
+    //Remove an IP for sending.
+    public static void removeConnection(String IP){
+        Connections.remove(IP);
+    }
+    
+    //Removes a client's connection object.
+    public static void removeServer(String IP){
+        Servers.get(IP).Close();
+        Servers.remove(IP);
+        removeConnection(IP);
+    }
+    
+    //Assign the map for sender as all logged IPs.
+    //TODO: Allow for new users to recieve chats by adding new users to default.
+    public static void createDefaultConnectionset(String MainIP){
+        Connections.put(MainIP,new HashMap<>());
+        Connections.forEach((String I,Object B) -> {
+            if (!I.equals(MainIP)){
+                addConnection(MainIP,I);
             }
         });
-        return false;
     }
     
-    //A protocol to make sure that all connecting clients are meant to connect and
-    //have all data that it needs.
-    private void connectionProtocolAssist(String K){
-        Connector.API.Log(K);
-        switch(K){
-            case "::Connect?":
-                connect();
-                Connector.API.Send(IP,"OK");
-                break;
-            case "::Encrypt?":
-                Connector.API.Log(Key);
-                Connector.API.Send(IP,Integer.toString(Key));
-                break;
-            default:
-                System.out.println(Connector.EnDe.Decrypt(K.substring(2), Key));
-                if (Connector.EnDe.Decrypt(K.substring(2), Key).equals("@Start")){
-                    //Tells client to reset actions.
-                    enSend(IP,"SessionStart");
-                    
-                    //Reset protocol action to work for messenger.
-                    Connector.API.RemoveListenerAction(IP, "Main_Listener");
-                    
-                    Connector.API.CreateListenerAction(IP, "Communication", new FuncStore("Connection"){
-                        @Override
-                        public void Run(String Message){
-                            String DeMessage = Connector.EnDe.Decrypt(Message.substring(2),Key);
-                            
-                            String[] Split = DeMessage.split(":");
-                            
-                            if (Split[0].equals("@Name")){
-                                Connector.API.Log("Name change: " + Split[1]);
-                                Connector.setName(IP, Split[1]);
-                                Connector.UpdateAll();
-                                TestConnections();
-                            }else if (Split[0].equals("Connectionset")){
-                                Connector.OneConnection(IP,Connector.getIP(Split[1]));
-                            }else if (Split[0].equals("DefaultConnectionset")){
-                                Connector.createDefaultConnectionset(IP);
-                            }else if(DeMessage.substring(3).equals("|||")){
-                                System.out.println("Message: " + DeMessage);
-                                Connector.sendConnectionset(IP, "|||" + Connector.getName(IP) + ":" + DeMessage.substring(3));
-                            }else{
-                                System.out.println(DeMessage.substring(0,3));
-                            }
-                        }
-                    });
-                    
-                    //Connects client to chat relay.
-                    Connector.createDefaultConnectionset(IP);
-                    if (Connector.getName(IP).equals("")){
-                        Connector.setName(IP, IP);
-                        Connector.sendAll(IP,"AddName:" + IP);
-                    }
-                    Connector.UpdateAll();
-                }
-                break; 
-        }
+    //Send chat to specific user.
+    public static void sendAt(String IP,String Text){
+        Servers.get(IP).enSend(IP, Text);
     }
     
-    
-    
-    //Prints all known connections.
-    public void TestConnections(){
-        for (String K: Connector.getConnections().keySet()){
-            Connector.API.Log("Connection :" + Connector.getName(K,true));
-        }
-    }
-    
-    public void UpdateConnections(HashMap<String,HashMap<String,Integer>> List){
-        Connector.API.Log(Connector.getName(IP));
-        TestConnections();
-        String StringSet = "ConnectionSet:";
-        
-        for (String Val: List.keySet()){
-            if (!Val.equals(IP)){
-                StringSet = StringSet + ":" + Connector.getName(Val,true);
+    //Send chat to all users logged in server.
+    public static void sendAll(String CurrentIP,String Text){
+        Connections.forEach((String IP,Object B) -> {
+            if (!IP.equals(CurrentIP)){
+                Servers.get(IP).enSend(IP,Text);
             }
-        }
-        
-         enSend(IP,StringSet);
+        });
     }
     
-    //Sends encrypted messeges.
-    public void enSend(String Connection,String Text){
-        Connector.API.Send(Connection,Connector.EnDe.Encrypt(Text, Key));
+    //Sends a message or command to all clients.
+    public static void Broadcast(String Text){
+        Connections.forEach((String IP,Object B) -> {
+            Servers.get(IP).enSend(IP,Text);
+        });
+    }
+    
+    //Sends a message to every client in a mapped connection set.
+    //Connection sets are the given IPS a client sends to, meaning the IP given will
+    //relate to the connections of the client that called this command.
+    public static void sendConnectionset(String IP,String Text){
+        Connections.get(IP).forEach((String IPc,Integer B) -> {
+            Servers.get(IPc).enSend(IPc,Text);
+        });
+    }
+    
+    //Appends a new connection to every non singular connection set.
+    public static void UpdateConnectionsets(String IP){
+        Connections.forEach((String IPc,Object B) ->{
+            if (!IPc.equals(IP)){
+                addConnection(IPc,IP);
+            }
+        });
+    }
+    
+    //Updates every client's connection set.
+    public static void UpdateAll(){
+        Servers.forEach((String K,Connector Upd) -> {
+            
+            Upd.UpdateConnections(Connections);
+        });
+    }
+    
+    //Constructor.
+    public Server(){
+        
+    }
+    
+    //Main method.
+    public static void main(String[] args) {
+        Server.IsServer = true;
+        Server.API = new TCPApi();
+        Server C = new Server();
+
+        //Thread for accepting new clients constantly.
+        Thread ConnectionThread = new Thread(new Runnable(){
+            @Override
+            public void run(){
+                while (true){
+                    API.Log("Waiting for new connection :");
+                    Socket New = API.GetServerSocket(6789);
+                    String IP = New.getInetAddress().toString().substring(1);
+                    API.Log("Connection inititated for IP: " + IP);
+                    Servers.put(IP,new Connector(New));
+                }
+            }
+        },"Connector");
+        
+        //Starts connector thread.
+        ConnectionThread.start();
     }
 }

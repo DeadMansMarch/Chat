@@ -190,9 +190,10 @@ public class TCPApi {
         try{
             Timers.get(Name).cancel();
             Connections.get(Name).close();
+            Connections.remove(Name);
             RemoveListener(Name);
-            Connector.sendAll(Name, "Rem:" + Connector.getName(Name));
-            Connector.removeConnection(Name);
+            Server.sendAll(Name, "Rem:" + Server.getName(Name));
+            Server.removeServer(Name);
         }catch(IOException E){
             
         }
@@ -220,7 +221,7 @@ public class TCPApi {
     }
     
     public TCPApi(){
-        if (Connector.IsServer){
+        if (Server.IsServer){
             APIType = true;
             Log("Creating server API.");
         }else{

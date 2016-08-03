@@ -32,6 +32,13 @@ public class IP {
         return null;
     }
     
+    public static boolean checkIP(String IP){
+        if (IP.split(".").length == 4){
+            return true;
+        }
+        return false;
+    }
+    
     //This is some trash, delete?.
     public String tostring(){
         return IP;

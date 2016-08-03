@@ -1,4 +1,3 @@
-
 package chat;
 
 /**
@@ -11,21 +10,22 @@ public class Client{
     static Crypt EnDe;
     static int Key = 0;
     static UI MainUI;
+    public static ServerLogin NewLogin;
+    public static Thread RunUI;
     
     //Disconnects MainUI
-    //TODO : Add autoreconnect to servers.
     public static void Disconnect(){
         MainUI.dispose();
     }
     
-    final private IP Server = new IP("136.167.171.92",6789);
+    private IP Server;
     
     //Main connection protocol.
-    public boolean protocolC(){
+    public boolean protocolC(String Password){
         
         API.Connection(Server,"Main");
         
-        API.Send("Main","Connect?");
+        API.Send("Main","Password:" + Password);
         
         API.CreateListener(6789,"Main", new FuncStore("MainConnectionProtocol"){
             @Override
@@ -42,15 +42,19 @@ public class Client{
         System.out.println(K);
         switch(K){
             
+            case "::BadPass":
+                NewLogin.dispose();
             case "::OK":
+                RunUI.start();
                 API.Send("Main","Encrypt?");
                 break;
             case "::Connected":
+                
                 API.Send("Main", K);
                 break;
             default:
                 if (Key != 0 && EnDe.Decrypt(K.substring(2), Key).equals("SessionStart")){
-                    //
+                    
                     API.RemoveListenerAction("Main","Main_Listener");
                     API.CreateListenerAction("Main", "Communication", new FuncStore("Connection"){
                         @Override
@@ -82,10 +86,12 @@ public class Client{
         }
     }
     
+    //Sets the connectionset to NameOrIP.
     public static void ChangeConnectionset(String NameOrIP){
         enSend("Main","Connectionset:" + NameOrIP);
     }
     
+    //Sets the clients connectionset to default.
     public static void DefaultConnectionset(){
         enSend("Main","DefaultConnectionset");
     }
@@ -98,22 +104,38 @@ public class Client{
     //Main method.
     
     public static void main(String[] args) {
-        Thread K = new Thread(new Runnable(){
+        API.Log("Attempting connection to server...");
+
+        RunUI = new Thread(new Runnable(){
             @Override
             public void run(){
                 MainUI = new UI();
             }
         },"UI Cancer");
         
-        K.start();
-        API.Log("Attempting connection to server...");
-        Client Chat = new Client();
+        Thread W = new Thread(new Runnable(){
+            @Override
+            public void run(){
+                NewLogin = new ServerLogin();
+            }
+        },"UI Tumor");
+        W.start();
+        
+        //This some trash.
+        while (NewLogin == null){
+            
+        }
+        
+        NewLogin.login();
+        String IP = NewLogin.getIP();
+        String Password = NewLogin.getPassword();
+        Client NewClient = new Client(IP,Password);
         Client.EnDe = new Crypt();
-        Chat.protocolC();
     }
     
     
-    public Client(){
-        
+    public Client(String IP,String Password){
+         Server = new IP(IP,6789);
+         protocolC(Password);
     }
 }

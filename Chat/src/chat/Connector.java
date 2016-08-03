@@ -6,149 +6,158 @@
 package chat;
 
 import java.util.*;
-import java.net.Socket;
+import java.net.*;
 
 /**
  *
- * @author Liam Pierce  
+ * @author Liam Pierce
  */
 public class Connector {
-    public static boolean IsServer = false;
-    public static TCPApi API;
-    public static Random RandCreator = new Random();
-    public static Crypt EnDe = new Crypt();
-    private static HashMap<String,Server> Servers = new HashMap<>();
-    private static HashMap<String,HashMap<String,Integer>> Connections = new HashMap<>();
-    private static HashMap<String,String> NameMap = new HashMap<>();
     
-    //Return map of all connections.
-    public static HashMap<String,HashMap<String,Integer>> getConnections(){
-        return Connections;
-    }
+    private int Key = 0;
+    private final Socket Connection;
+    private final String IP;
     
-    //Get assigned name for IP.
-    public static String getName(String IP,boolean ReturnIP){
-        
-        if (NameMap.containsKey(IP)){
-            return NameMap.get(IP);
+    //Connects server object to given client.
+    
+    public void Close(){
+        try{
+            Connection.close();
+        }catch(Exception E){
+            
         }
         
-        if (ReturnIP){
-            return IP;
-        }
+        TestConnections();
+    }
+    
+    public void connect(){
+        System.out.println("Creating new connection to " + IP);
+        Server.API.Connection(new IP(IP,6789),IP);
+    }
+    
+    //Starts connections.
+    public Connector(Socket Connection){
+        this.Connection = Connection;
+        this.IP = Connection.getInetAddress().toString().substring(1);
         
-        return "";
-    }
-    
-    public static String getName(String IP){
-        return getName(IP,false);
-    }
-    
-    public static String getIP(String Name){
-        String IP = "";
-        for (Map.Entry<String, String> NameSet : NameMap.entrySet()) {
-             if (NameSet.getValue().equals(Name)){
-                 IP = NameSet.getKey();
-                 break;
-             }
-        }
-        return IP;
-    }
-    
-    //Assign name for given IP.
-    public static void setName(String IP, String Name){
-        NameMap.put(IP,Name);
-    }
-    
-    public static void OneConnection(String MainIP,String IP){
-        Connections.get(MainIP).clear();
-        Connections.get(MainIP).put(IP,1);
-    }
-    
-    //Log an IP for sending.
-    public static void addConnection(String MainIP,String IP){
-        Connections.get(MainIP).put(IP,1);
-    }
-    
-    //Remove an IP for sending.
-    public static void removeConnection(String IP){
-        Connections.remove(IP);
-    }
-    
-    public static void removeServer(String IP){
-        Servers.get(IP).Close();
-        Servers.remove(IP);
-    }
-    
-    //Assign the map for sender as all logged IPs.
-    //TODO: Allow for new users to recieve chats by adding new users to default.
-    public static void createDefaultConnectionset(String MainIP){
-        Connections.put(MainIP,new HashMap<>());
-        Connections.forEach((String I,Object B) -> {
-            if (!I.equals(MainIP)){
-                addConnection(MainIP,I);
-            }
-        });
-    }
-    
-    //Send chat to specific user.
-    public static void sendAt(String IP,String Text){
-        Servers.get(IP).enSend(IP, Text);
-    }
-    
-    //Send chat to all users logged in server.
-    public static void sendAll(String CurrentIP,String Text){
-        Connections.forEach((String IP,Object B) -> {
-            if (!IP.equals(CurrentIP)){
-                Servers.get(IP).enSend(IP,Text);
-            }
-        });
-    }
-    
-    public static void Broadcast(String Text){
-        Connections.forEach((String IP,Object B) -> {
-            Servers.get(IP).enSend(IP,Text);
-        });
-    }
-    
-    public static void sendConnectionset(String IP,String Text){
-        Connections.get(IP).forEach((String IPc,Integer B) -> {
-            Servers.get(IPc).enSend(IPc,Text);
-        });
-        
-    }
-    
-    public static void UpdateAll(){
-        Servers.forEach((String K,Server Upd) -> {
-            Upd.UpdateConnections(Connections);
-        });
-    }
-    
-    //Constructor.
-    public Connector(){
-        
-    }
-    
-    public static void main(String[] args) {
-        Connector.IsServer = true;
-        Connector.API = new TCPApi();
-        Connector C = new Connector();
-
-        //Thread for accepting new clients constantly.
-        Thread ConnectionThread = new Thread(new Runnable(){
+        //Runs connection protocol while allowing connector to continue without wait.
+        Thread ServerThread = new Thread(new Runnable(){
             @Override
             public void run(){
-                while (true){
-                    API.Log("Waiting for new connection :");
-                    Socket New = API.GetServerSocket(6789);
-                    String IP = New.getInetAddress().toString().substring(1);
-                    API.Log("Connection inititated for IP: " + IP);
-                    Servers.put(IP,new Server(New));
-                }
+                Key = Server.RandCreator.nextInt(500);
+                protocolC();
             }
-        },"Connector");
+        },"ServerThread");
         
-        //Starts connector thread.
-        ConnectionThread.start();
+        
+        ServerThread.start();
+        
+    }
+    
+    //Connection protocol.
+    public boolean protocolC(){
+        Server.API.CreateServerListener(Connection,IP, new FuncStore("MainConnectionProtocol"){
+            @Override
+            void Run(String Text){
+                connectionProtocolAssist(Text);
+            }
+        });
+        return false;
+    }
+    
+    //A protocol to make sure that all connecting clients are meant to connect and
+    //have all data that it needs.
+    private void connectionProtocolAssist(String K){
+        Server.API.Log(K);
+        switch(K){
+            case "::Connect?":
+                connect();
+                Server.API.Send(IP,"OK");
+                break;
+            case "::Encrypt?":
+                Server.API.Log(Key);
+                Server.API.Send(IP,Integer.toString(Key));
+                break;
+            default:
+                System.out.println(Server.EnDe.Decrypt(K.substring(2), Key));
+                String[] DE = K.split(":");
+                if (DE[0].equals("Password")){
+                    if (Server.CompareStrings(DE[1])){
+                        Server.API.Send(IP,"OK");
+                    }else{
+                        Server.API.Send(IP,"BadPass");
+                    }
+                }else if (Server.EnDe.Decrypt(K.substring(2), Key).equals("@Start")){
+                    //Tells client to reset actions.
+                    enSend(IP,"SessionStart");
+                    
+                    //Reset protocol action to work for messenger.
+                    Server.API.RemoveListenerAction(IP, "Main_Listener");
+                    
+                    Server.API.CreateListenerAction(IP, "Communication", new FuncStore("Connection"){
+                        @Override
+                        public void Run(String Message){
+                            String DeMessage = Server.EnDe.Decrypt(Message.substring(2),Key);
+                            
+                            String[] Split = DeMessage.split(":");
+                            
+                            if (Split[0].equals("@Name")){
+                                Server.API.Log("Name change: " + Split[1]);
+                                Server.setName(IP, Split[1]);
+                                Server.UpdateAll();
+                                TestConnections();
+                            }else if (Split[0].equals("Connectionset")){
+                                Server.OneConnection(IP,Server.getIP(Split[1]));
+                            }else if (Split[0].equals("DefaultConnectionset")){
+                                Server.createDefaultConnectionset(IP);
+                            }else if(DeMessage.substring(0,3).equals("|||")){
+                                System.out.println("Message: " + DeMessage);
+                                Server.sendConnectionset(IP, "|||" + Server.getName(IP) + ":" + DeMessage.substring(3));
+                            }else{
+                                System.out.println(DeMessage.substring(0,3));
+                            }
+                        }
+                    });
+                    
+                    //Connects client to chat relay.
+                    Server.createDefaultConnectionset(IP);
+                    Server.UpdateConnectionsets(IP);
+                    if (Server.getName(IP).equals("")){
+                        Server.setName(IP, IP);
+                        Server.sendAll(IP,"AddName:" + IP);
+                    }
+                    
+                    Server.UpdateAll();
+                }
+                break; 
+        }
+    }
+    
+    
+    
+    //Prints all known connections.
+    public void TestConnections(){
+        for (String K: Server.getConnections().keySet()){
+            Server.API.Log("Connection :" + Server.getName(K,true));
+        }
+    }
+    
+    public void UpdateConnections(HashMap<String,HashMap<String,Integer>> List){
+        Server.API.Log(Server.getName(IP));
+        TestConnections();
+        String StringSet = "ConnectionSet:";
+        
+        for (String Val: List.keySet()){
+            if (!Val.equals(IP)){
+                StringSet = StringSet + ":" + Server.getName(Val,true);
+            }
+        }
+        
+         enSend(IP,StringSet);
+    }
+    
+    //Sends encrypted messeges.
+    public void enSend(String Connection,String Text){
+        Server.API.Send(Connection,Server.EnDe.Encrypt(Text, Key));
     }
 }
