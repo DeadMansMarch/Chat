@@ -1,20 +1,17 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package chat;
 
 import java.awt.*;
+import java.util.*;
 import javafx.event.*;
+import javax.swing.*;
 
 /**
  *
- * @author Zach Birenbaum
+ * @author Camper
  */
 public class UI extends javax.swing.JFrame {
     
-    
+    int index = -1;
     
     public UI() {
         
@@ -29,9 +26,7 @@ public class UI extends javax.swing.JFrame {
         } catch (Exception ex) {
             java.util.logging.Logger.getLogger(UI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
-        //</editor-fold>
 
-        /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 initComponents();
@@ -40,16 +35,14 @@ public class UI extends javax.swing.JFrame {
         
         this.setVisible(true);
     }
-    
-    public String hostName = "";
+  
+    public String hostName = "You";
     
     public void setHost(String Host){
         hostName = Host;
     }
-    
-
     @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">                          
+   
     private void initComponents() {
 
         jButton1 = new javax.swing.JButton();
@@ -92,6 +85,12 @@ public class UI extends javax.swing.JFrame {
         jTextField1.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 jTextField1KeyPressed(evt);
+            }
+        });
+
+        list1.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                list1MouseClicked(evt);
             }
         });
 
@@ -141,23 +140,32 @@ public class UI extends javax.swing.JFrame {
         );
 
         pack();
-    }// </editor-fold>                        
+    }                     
     private void jScrollPane(java.awt.event.ActionEvent evt){
   
     }
     
-    
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {                                         
-        appendText(jTextField1.getText(),hostName);
+        String text = (jTextField1.getText());
+        jTextField1.setText("");
+        jTextArea1.append(text);
+        jTextArea1.append("\n");
         
-    }                                        
-
-    private void ipList(){
-        list1.add("text");
     }
     
-    
-    
+    public void toServer(String name){
+        System.out.println(name);
+        Client.enSend("Main", "@Name:" + name);
+    }
+      
+    public void Update(String[] Connections){
+        list1.removeAll();
+        for (String Update : Connections){
+            if ((!Update.equals("ConnectionSet") && (!Update.isEmpty()))){
+                list1.add(Update);
+            }
+        }
+    }
     
     private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {                                            
 
@@ -169,24 +177,30 @@ public class UI extends javax.swing.JFrame {
         }        // TODO add your handling code here:
     }                                        
 
-    private void jButton1KeyPressed(java.awt.event.KeyEvent evt) {                                    
-
-    }
-    
-    void appendText(String Text, String Name){
-        
-        jTextField1.setText("");
-        jTextArea1.append(Name + ": " + Text);
-        jTextArea1.append("\n");
-        Client.EnSend("Main",Name + ":" + Text);
-    }
+    private void jButton1KeyPressed(java.awt.event.KeyEvent evt) {
+        appendText(jTextField1.getText(),hostName);
+    }                                   
 
     private void jTextField1KeyPressed(java.awt.event.KeyEvent evt) {                                       
         int enterCheck = evt.getKeyChar();
         if (enterCheck == 10){
-              appendText(jTextField1.getText(),hostName);
-       }      // TODO add your handling code here:
-    }                                      
+            appendText(jTextField1.getText(),hostName);  
+       }    
+    }
+    
+    //Unused
+    public void changeName(String oldName, String newName){
+        int Index = 0;
+        for (String K : list1.getItems()){
+            
+            if(K.equals(oldName)){
+                list1.replaceItem(newName, Index);
+            }
+            
+            Index += 1;
+            break;
+        }
+    }
 
     private void jTextField2MouseClicked(java.awt.event.MouseEvent evt) {                                         
         jTextField2.setText("");
@@ -197,15 +211,54 @@ public class UI extends javax.swing.JFrame {
         if (enterCheck == 10){
            String text = (jTextField2.getText());
            jTextField2.setText("");
-           list1.add(text);  
+           toServer(text); 
         }
     }                                      
 
+    private void list1MouseClicked(java.awt.event.MouseEvent evt) {
+        String ipselect = list1.getSelectedItem();
+        if(index == list1.getSelectedIndex()){
+            list1.deselect(index);
+            Client.DefaultConnectionset();
+        }else if(ipselect!= null){
+            Client.ChangeConnectionset(ipselect);
+        }
+        
+        index = list1.getSelectedIndex();
+        
+    }
+    
+    //Unused
+    public void nameRemove(String Name){
+        int Index = 0;
+        for (String K : list1.getItems()){
+            
+            if(K.equals(Name)){
+                list1.remove(Index);
+                break;
+            }
+            
+            Index += 1;
+        }
+    }
 
-    /**
-     * @param args the command line arguments
-     */
 
+    public void addMessage(String name, String message){
+        jTextArea1.append(name +": " + message);
+        jTextArea1.append("\n");       
+    }
+    
+    
+    public void appendText(String Text, String Name){
+        
+        jTextField1.setText("");
+        jTextArea1.append(Name + ": " + Text);
+        jTextArea1.append("\n");
+        Client.enSend("Main",Text);
+    }
+    
+    
+    
 
     // Variables declaration - do not modify                     
     private javax.swing.JButton jButton1;
@@ -217,6 +270,9 @@ public class UI extends javax.swing.JFrame {
     // End of variables declaration                   
 
     private void displaytext(){
+        //lel what am i doing
     }
 }
+
+
 

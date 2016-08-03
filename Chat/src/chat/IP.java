@@ -31,7 +31,8 @@ public class IP {
         System.exit(1);
         return null;
     }
-    //This is some trash I swear.
+    
+    //This is some trash, delete?.
     public String tostring(){
         return IP;
     }
