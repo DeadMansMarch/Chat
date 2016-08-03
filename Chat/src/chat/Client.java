@@ -1,6 +1,4 @@
 
-/* @Error: 1 - HostNotFoundException;
-*/
 package chat;
 
 /**
@@ -9,55 +7,107 @@ package chat;
  */
 public class Client{
     static String Last;
-    TCPApi API = new TCPApi();
-    Crypt EnDe;
-    String User = "Guest";
-    String Pass = null;
-    int Key = 1;
+    static TCPApi API = new TCPApi();
+    static Crypt EnDe;
+    static int Key = 0;
+    static UI MainUI;
     
-    private boolean ProtocolC(){
-        API.Connection(new IP("136.167.171.151",6789),"Main");
-        API.CreateListener(6789,"", null);
+    final private IP Server = new IP("136.167.171.92",6789);
+    
+    //Main connection protocol.
+    public boolean protocolC(){
         
-        API.CreateListenerAction("Main","ProtocolC",
-                new FuncStore("MainConnectionProtocol"){
+        API.Connection(Server,"Main");
+        
+        API.Send("Main","Connect?");
+        
+        API.CreateListener(6789,"Main", new FuncStore("MainConnectionProtocol"){
             @Override
             void Run(String Text){
-                Client.Last = Text;
-                ConnectionProtocolAssist(Text);
+                connectionProtocolAssist(Text);
             }
         });
         return false;
     }
     
-    private void EnSend(String Socket,String Message){
-        API.Send(Socket,EnDe.Encrypt(Message,Key));
-    }
-    
-    private void ConnectionProtocolAssist(String K){
+    //Intercept for connection protocol.
+    private void connectionProtocolAssist(String K){
         Client.Last = K;
-        
+        System.out.println(K);
         switch(K){
             
-            case "::OK\n":
+            case "::OK":
                 API.Send("Main","Encrypt?");
                 break;
-            
-            case "::Connected\n":
-                EnSend("Main", "Handled.");
+            case "::Connected":
+                API.Send("Main", K);
                 break;
-            case "Information?":
-                EnSend("Main",User);
             default:
-                Key = Integer.parseInt(K.substring(3, K.length() - 1));
+                if (Key != 0 && EnDe.Decrypt(K.substring(2), Key).equals("SessionStart")){
+                    //
+                    API.RemoveListenerAction("Main","Main_Listener");
+                    API.CreateListenerAction("Main", "Communication", new FuncStore("Connection"){
+                        @Override
+                        public void Run(String Text){
+                            String DeMessage = EnDe.Decrypt(Text.substring(2), Key);
+                            String ID[] = DeMessage.split(":");
+                            
+                            if (ID[0].equals("IsName")){
+                                System.out.println("??");
+                                MainUI.changeName(ID[1],ID[2]);
+                            }else if (ID[0].equals("ConnectionSet")){
+                                System.out.println("Set");
+                                MainUI.Update(ID);
+                            }else if (ID[0].equals("AddName")){
+                                //MainUI.ipList(ID[1]);
+                            }else if(ID[0].equals("Rem")){
+                                 MainUI.nameRemove(ID[1]);   
+                            }else{
+                                MainUI.addMessage(ID[0],ID[1]);
+                            }
+                        }
+                    });
+                    
+                }else{
+                    Key = Integer.parseInt(K.substring(2));
+                    enSend("Main","@Start");
+                }
                 break;
         }
     }
     
+    public static void ChangeConnectionset(String NameOrIP){
+        enSend("Main","Connectionset:" + NameOrIP);
+    }
+    
+    public static void DefaultConnectionset(){
+        enSend("Main","DefaultConnectionset");
+    }
+    
+    //Sending encrypted messages.
+    public static void enSend(String Connection,String Text){
+        API.Send(Connection,EnDe.Encrypt(Text, Key));
+    }
+    
+    //Main method.
+    
     public static void main(String[] args) {
+        Thread K = new Thread(new Runnable(){
+            @Override
+            public void run(){
+                MainUI = new UI();
+            }
+        },"UI Cancer");
+        
+        K.start();
+        API.Log("Attempting connection to server...");
         Client Chat = new Client();
-        Chat.EnDe = new Crypt();
-        String K = Chat.EnDe.Decrypt(Chat.EnDe.Encrypt("StraightUpCancer", 200), 200);
-        System.out.println("@Done" + K + "-");
+        Client.EnDe = new Crypt();
+        Chat.protocolC();
+    }
+    
+    
+    public Client(){
+        
     }
 }
