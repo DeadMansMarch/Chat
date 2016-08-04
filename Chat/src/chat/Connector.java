@@ -62,6 +62,7 @@ public class Connector {
                 connectionProtocolAssist(Text);
             }
         });
+        
         return false;
     }
     
@@ -71,20 +72,28 @@ public class Connector {
         Server.API.Log(K);
         switch(K){
             case "::Connect?":
-                connect();
-                Server.API.Send(IP,"OK");
                 break;
             case "::Encrypt?":
                 Server.API.Log(Key);
                 Server.API.Send(IP,Integer.toString(Key));
                 break;
             default:
-                System.out.println(Server.EnDe.Decrypt(K.substring(2), Key));
-                String[] DE = K.split(":");
+                String[] DE = K.substring(2).split(":");
                 if (DE[0].equals("Password")){
-                    if (Server.CompareStrings(DE[1])){
+                    connect();
+                    
+                    String Comp = "";
+                    if (DE.length > 1){
+                        Comp = DE[1];
+                    }
+                    
+                    System.out.println("OK");
+                    
+                    if (Server.CompareStrings(Comp)){
+                        System.out.println("OK");
                         Server.API.Send(IP,"OK");
                     }else{
+                        System.out.println("OK");
                         Server.API.Send(IP,"BadPass");
                     }
                 }else if (Server.EnDe.Decrypt(K.substring(2), Key).equals("@Start")){

@@ -123,10 +123,15 @@ public class Client{
         
         //This some trash.
         while (NewLogin == null){
-            
+            try{
+                Thread.sleep(10);
+            }catch(Exception E){
+                
+            }
         }
-        
+        System.out.println("Done.");
         NewLogin.login();
+        System.out.println("Alright.");
         String IP = NewLogin.getIP();
         String Password = NewLogin.getPassword();
         Client NewClient = new Client(IP,Password);

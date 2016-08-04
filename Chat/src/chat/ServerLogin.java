@@ -146,15 +146,18 @@ public class ServerLogin extends javax.swing.JFrame {
 
     
     public boolean CheckAnswers(){
-        
         return IP.checkIP(jTextField1.getText());
     }
     
     public void login(){
-        System.out.println("OK");
        while (true){
-           if (Submit){
-               if (CheckAnswers()) {
+           try{
+              Thread.sleep(10);
+           }catch(Exception E){
+               
+           }
+           if (Submit == true){
+               if (CheckAnswers() == false){
                     break;
                }
            }

@@ -33,7 +33,9 @@ public class IP {
     }
     
     public static boolean checkIP(String IP){
-        if (IP.split(".").length == 4){
+        String[] Dots = IP.split(".");
+        System.out.println(Dots.length);
+        if (Dots.length == 4){
             return true;
         }
         return false;
@@ -44,3 +46,4 @@ public class IP {
         return IP;
     }
 }
+
