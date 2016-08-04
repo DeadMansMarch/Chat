@@ -215,6 +215,12 @@ public class TCPApi {
         Timers.remove(Name);
     }
     
-    public TCPApi(){
+    //Returns API type.
+    public static boolean APIType(){
+        return APIType;
+    }
+    
+    public TCPApi(boolean APIType){
+        this.APIType = APIType;
     }
 }
