@@ -6,7 +6,7 @@ package chat;
  */
 public class Client{
     static String Last;
-    static TCPApi API = new TCPApi();
+    static TCPApi API = new TCPApi(false);
     static Crypt EnDe;
     static int Key = 0;
     static UI MainUI;

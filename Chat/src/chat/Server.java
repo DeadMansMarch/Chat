@@ -171,9 +171,10 @@ public class Server {
     }
     
     //Main method.
+    /*
     public static void main(String[] args) {
         Server.IsServer = true;
-        Server.API = new TCPApi();
+        Server.API = new TCPApi(true);
         Server C = new Server();
 
         //Thread for accepting new clients constantly.
@@ -207,4 +208,5 @@ public class Server {
         ServerSender.start();
         
     }
+*/
 }
