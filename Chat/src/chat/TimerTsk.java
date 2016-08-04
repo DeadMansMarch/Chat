@@ -27,10 +27,11 @@ public class TimerTsk extends TimerTask {
             }
         }catch(Exception E){
             System.out.println(E);
-            if (!Server.IsServer){
+            if (TCPApi.APIType()){
+                //Server.closeConnection(Connection.getInetAddress().toString().substring(1));
+            }else{
                 Client.Disconnect();
             }
-            Server.closeConnection(Connection.getInetAddress().toString().substring(1));
         }
     }
     
