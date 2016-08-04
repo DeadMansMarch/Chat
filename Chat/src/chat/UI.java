@@ -222,7 +222,9 @@ public class UI extends javax.swing.JFrame {
         if(index == list1.getSelectedIndex()){
             list1.deselect(index);
             Client.DefaultConnectionset();
+            System.out.println("Connection set : Default.");
         }else if(ipselect!= null){
+            System.out.println("Connection set : " + ipselect);
             Client.ChangeConnectionset(ipselect);
         }
         

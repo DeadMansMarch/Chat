@@ -24,15 +24,12 @@ public class Connector {
         try{
             Connection.close();
         }catch(Exception E){
-            
         }
-        
-        TestConnections();
     }
     
     public void connect(){
         System.out.println("Creating new connection to " + IP);
-        Server.API.Connection(new IP(IP,6789),IP);
+        Server.API.connection(new IP(IP,6789),IP);
     }
     
     //Starts connections.
@@ -56,7 +53,7 @@ public class Connector {
     
     //Connection protocol.
     public boolean protocolC(){
-        Server.API.CreateServerListener(Connection,IP, new FuncStore("MainConnectionProtocol"){
+        Server.API.createServerListener(Connection,IP, new FuncStore("MainConnectionProtocol"){
             @Override
             void Run(String Text){
                 connectionProtocolAssist(Text);
@@ -69,13 +66,13 @@ public class Connector {
     //A protocol to make sure that all connecting clients are meant to connect and
     //have all data that it needs.
     private void connectionProtocolAssist(String K){
-        Server.API.Log(K);
+        Server.API.log(K);
         switch(K){
             case "::Connect?":
                 break;
             case "::Encrypt?":
-                Server.API.Log(Key);
-                Server.API.Send(IP,Integer.toString(Key));
+                Server.API.log(Key);
+                Server.API.send(IP,Integer.toString(Key));
                 break;
             default:
                 String[] DE = K.substring(2).split(":");
@@ -89,21 +86,21 @@ public class Connector {
                     
                     System.out.println("OK");
                     
-                    if (Server.CompareStrings(Comp)){
+                    if (Server.compareStrings(Comp)){
                         System.out.println("OK");
-                        Server.API.Send(IP,"OK");
+                        Server.API.send(IP,"OK");
                     }else{
                         System.out.println("OK");
-                        Server.API.Send(IP,"BadPass");
+                        Server.API.send(IP,"BadPass");
                     }
                 }else if (Server.EnDe.Decrypt(K.substring(2), Key).equals("@Start")){
                     //Tells client to reset actions.
                     enSend(IP,"SessionStart");
                     
                     //Reset protocol action to work for messenger.
-                    Server.API.RemoveListenerAction(IP, "Main_Listener");
+                    Server.API.removeListenerAction(IP, "Main_Listener");
                     
-                    Server.API.CreateListenerAction(IP, "Communication", new FuncStore("Connection"){
+                    Server.API.createListenerAction(IP, "Communication", new FuncStore("Connection"){
                         @Override
                         public void Run(String Message){
                             String DeMessage = Server.EnDe.Decrypt(Message.substring(2),Key);
@@ -111,12 +108,11 @@ public class Connector {
                             String[] Split = DeMessage.split(":");
                             
                             if (Split[0].equals("@Name")){
-                                Server.API.Log("Name change: " + Split[1]);
+                                Server.API.log("Name change: " + Split[1]);
                                 Server.setName(IP, Split[1]);
-                                Server.UpdateAll();
-                                TestConnections();
+                                Server.updateAll();
                             }else if (Split[0].equals("Connectionset")){
-                                Server.OneConnection(IP,Server.getIP(Split[1]));
+                                Server.oneConnection(IP,Server.getIP(Split[1]));
                             }else if (Split[0].equals("DefaultConnectionset")){
                                 Server.createDefaultConnectionset(IP);
                             }else if(DeMessage.substring(0,3).equals("|||")){
@@ -130,30 +126,22 @@ public class Connector {
                     
                     //Connects client to chat relay.
                     Server.createDefaultConnectionset(IP);
-                    Server.UpdateConnectionsets(IP);
+                    Server.updateConnectionsets(IP);
                     if (Server.getName(IP).equals("")){
                         Server.setName(IP, IP);
                         Server.sendAll(IP,"AddName:" + IP);
                     }
                     
-                    Server.UpdateAll();
+                    Server.updateAll();
                 }
                 break; 
         }
     }
     
     
-    
-    //Prints all known connections.
-    public void TestConnections(){
-        for (String K: Server.getConnections().keySet()){
-            Server.API.Log("Connection :" + Server.getName(K,true));
-        }
-    }
-    
-    public void UpdateConnections(HashMap<String,HashMap<String,Integer>> List){
-        Server.API.Log(Server.getName(IP));
-        TestConnections();
+    //Sends the connections to the associated client.
+    public void updateConnections(HashMap<String,HashMap<String,Integer>> List){
+        Server.API.log(Server.getName(IP));
         String StringSet = "ConnectionSet:";
         
         for (String Val: List.keySet()){
@@ -167,6 +155,6 @@ public class Connector {
     
     //Sends encrypted messeges.
     public void enSend(String Connection,String Text){
-        Server.API.Send(Connection,Server.EnDe.Encrypt(Text, Key));
+        Server.API.send(Connection,Server.EnDe.Encrypt(Text, Key));
     }
 }

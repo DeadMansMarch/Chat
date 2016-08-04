@@ -22,8 +22,20 @@ public class Server {
     private static HashMap<String,String> NameMap = new HashMap<>();
     private static String Password = "";
     
+    //Closes an active connection.
+    public static void closeConnection(String Name){
+        try{
+            API.closeTimer(Name);
+            API.removeListener(Name);
+            removeConnection(Name);
+            removeServer(Name);
+        }finally{
+            
+        }
+    }
+    
     //Compares a string with the password of the server.
-    public static boolean CompareStrings(String A){
+    public static boolean compareStrings(String A){
         return A.equals(Password);
     }
     
@@ -73,7 +85,7 @@ public class Server {
     }
     
     //Changes connectionset to have only one connection.
-    public static void OneConnection(String MainIP,String IP){
+    public static void oneConnection(String MainIP,String IP){
         Connections.get(MainIP).clear();
         Connections.get(MainIP).put(IP,1);
     }
@@ -121,8 +133,9 @@ public class Server {
     }
     
     //Sends a message or command to all clients.
-    public static void Broadcast(String Text){
+    public static void broadcast(String Text){
         Connections.forEach((String IP,Object B) -> {
+            System.out.println(IP);
             Servers.get(IP).enSend(IP,Text);
         });
     }
@@ -137,7 +150,7 @@ public class Server {
     }
     
     //Appends a new connection to every non singular connection set.
-    public static void UpdateConnectionsets(String IP){
+    public static void updateConnectionsets(String IP){
         Connections.forEach((String IPc,Object B) ->{
             if (!IPc.equals(IP)){
                 addConnection(IPc,IP);
@@ -146,10 +159,9 @@ public class Server {
     }
     
     //Updates every client's connection set.
-    public static void UpdateAll(){
+    public static void updateAll(){
         Servers.forEach((String K,Connector Upd) -> {
-            
-            Upd.UpdateConnections(Connections);
+            Upd.updateConnections(Connections);
         });
     }
     
@@ -169,10 +181,10 @@ public class Server {
             @Override
             public void run(){
                 while (true){
-                    API.Log("Waiting for new connection :");
-                    Socket New = API.GetServerSocket(6789);
+                    API.log("Waiting for new connection :");
+                    Socket New = API.getServerSocket(6789);
                     String IP = New.getInetAddress().toString().substring(1);
-                    API.Log("Connection inititated for IP: " + IP);
+                    API.log("Connection inititated for IP: " + IP);
                     Servers.put(IP,new Connector(New));
                 }
             }
@@ -180,5 +192,19 @@ public class Server {
         
         //Starts connector thread.
         ConnectionThread.start();
+        
+        Thread ServerSender = new Thread(new Runnable(){
+            @Override
+            public void run(){
+                while (true){
+                    Scanner S = new Scanner(System.in);
+
+                    broadcast("|||RealServerPlsStandUP:" + S.nextLine());
+                }
+            }
+        });
+        
+        ServerSender.start();
+        
     }
 }

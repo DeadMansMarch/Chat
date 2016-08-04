@@ -23,11 +23,11 @@ public class Client{
     //Main connection protocol.
     public boolean protocolC(String Password){
         
-        API.Connection(Server,"Main");
+        API.connection(Server,"Main");
         
-        API.Send("Main","Password:" + Password);
+        API.send("Main","Password:" + Password);
         
-        API.CreateListener(6789,"Main", new FuncStore("MainConnectionProtocol"){
+        API.createListener(6789,"Main", new FuncStore("MainConnectionProtocol"){
             @Override
             void Run(String Text){
                 connectionProtocolAssist(Text);
@@ -46,17 +46,17 @@ public class Client{
                 NewLogin.dispose();
             case "::OK":
                 RunUI.start();
-                API.Send("Main","Encrypt?");
+                API.send("Main","Encrypt?");
                 break;
             case "::Connected":
                 
-                API.Send("Main", K);
+                API.send("Main", K);
                 break;
             default:
                 if (Key != 0 && EnDe.Decrypt(K.substring(2), Key).equals("SessionStart")){
                     
-                    API.RemoveListenerAction("Main","Main_Listener");
-                    API.CreateListenerAction("Main", "Communication", new FuncStore("Connection"){
+                    API.removeListenerAction("Main","Main_Listener");
+                    API.createListenerAction("Main", "Communication", new FuncStore("Connection"){
                         @Override
                         public void Run(String Text){
                             String DeMessage = EnDe.Decrypt(Text.substring(2), Key);
@@ -98,14 +98,15 @@ public class Client{
     
     //Sending encrypted messages.
     public static void enSend(String Connection,String Text){
-        API.Send(Connection,EnDe.Encrypt(Text, Key));
+        API.send(Connection,EnDe.Encrypt(Text, Key));
     }
     
     //Main method.
     
     public static void main(String[] args) {
-        API.Log("Attempting connection to server...");
-
+        API.log("Attempting connection to server...");
+        
+        //UI to be run after login.
         RunUI = new Thread(new Runnable(){
             @Override
             public void run(){
@@ -113,6 +114,7 @@ public class Client{
             }
         },"UI Cancer");
         
+        //UI for login to be run right away.
         Thread W = new Thread(new Runnable(){
             @Override
             public void run(){
@@ -124,14 +126,13 @@ public class Client{
         //This some trash.
         while (NewLogin == null){
             try{
-                Thread.sleep(10);
+                Thread.sleep(10); // And this is the line that fixed an hour of bug testing.
             }catch(Exception E){
                 
             }
         }
-        System.out.println("Done.");
         NewLogin.login();
-        System.out.println("Alright.");
+        
         String IP = NewLogin.getIP();
         String Password = NewLogin.getPassword();
         Client NewClient = new Client(IP,Password);

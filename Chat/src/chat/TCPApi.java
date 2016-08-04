@@ -26,7 +26,7 @@ public class TCPApi {
     }
 
     //Logs a string.
-    public void Log(String Text){
+    public void log(String Text){
         if (Log){
             logHeader();
             System.out.println(Text);
@@ -34,7 +34,7 @@ public class TCPApi {
     }
     
     //Logs an object.
-    public void Log(Object Text){
+    public void log(Object Text){
         if (Log){
             logHeader();
             System.out.println(Text);
@@ -42,7 +42,7 @@ public class TCPApi {
     }
     
     //Logs a boolean.
-    public void Log(boolean Text){
+    public void log(boolean Text){
         if (Log){
             logHeader();
             System.out.println(Text);
@@ -50,47 +50,41 @@ public class TCPApi {
     }
     
     //Logs a character.
-    public void Log(char Text){
+    public void log(char Text){
         if (Log){
             logHeader();
             System.out.println(Text);
         }
     }
     
-    private boolean Connector(IP Host,String Name) throws IOException{
-
-            Connections.put(Name,new Socket(Host.Converter(),Host.GetPort()));
-            Log(" Connection Init Successful");
-            
-        
+    //Private method for creating a connection. Not to be used in public APIs.
+    private boolean connector(IP Host,String Name) throws IOException{
+        Connections.put(Name,new Socket(Host.Converter(),Host.GetPort()));
+        log(" Connection Init Successful");
         return true;
     }
     
-    public boolean Connection(IP Host,String Name){
+    //Creates a connection given an IP. Will autoreconnect.
+    public boolean connection(IP Host,String Name){
         try{
-            Connector(Host,Name);
+            connector(Host,Name);
         }catch(Exception E){
-            if (APIType){
-                if (!AutoConnect(Host,Name)){
-                    Client.Disconnect();
-                }
-            }else{
-                AutoConnect(Host,Name);
-            }
+            return autoConnect(Host,Name);
         }
         return true;
     }
     
-    public boolean AutoConnect(IP Host, String Name){
+    //A method for autoreconnection.
+    public boolean autoConnect(IP Host, String Name){
         int Tries = 0;
         boolean Connected = false;
         while (!Connected){
             try{
-                Connector(Host,Name);
+                connector(Host,Name);
                 break;
             }catch(Exception E){
                 Tries += 1;
-                Log("Reconnect failed, retrying...");
+                log("Reconnect failed, retrying...");
                 if (Tries >= 30){
                     Client.Disconnect();
                     return false;
@@ -101,7 +95,8 @@ public class TCPApi {
         return true;
     }
     
-    public void Send(String Connector,String Send){
+    //Sends data to a given mapped connection.
+    public void send(String Connector,String Send){
         Socket To = Connections.get(Connector);
         DataOutputStream Output;
         try{
@@ -109,37 +104,39 @@ public class TCPApi {
             Output.writeBytes("::" + Send + "\n");
             Output.flush();
         }catch(IOException E){
-            Log("Sending failed.");
+            log("Sending failed.");
         }
     }
     
-    public Socket GetServerSocket(int Port){
+    //Returns a socket that will
+    public Socket getServerSocket(int Port){
         Socket Try = null;
         if (Accept == null){
             try{
                 Accept = new ServerSocket(Port);
             }catch(IOException E){
-                Log("Error in serversocket: " + E);
+                log("Error in serversocket: " + E);
             }
         }
         try{
             Try = Accept.accept();
         }catch(Exception E){
-            Log("Server failed : " + E);
+            log("Server failed : " + E);
         }
         return Try;
     }
     
-    public void CreateListener(int Port, String Name, FuncStore Action){
+    //A method that creates a listener on a given port.
+    public void createListener(int Port, String Name, FuncStore Action){
         Socket Listener = null;
         InputStreamReader R = null;
         try{
-            Log("Working on listener.");
-            Listener = GetServerSocket(Port);
-            Log("ServerSocket created successfully.");
+            log("Working on listener.");
+            Listener = getServerSocket(Port);
+            log("ServerSocket created successfully.");
             R = new InputStreamReader(Listener.getInputStream());
         }catch(IOException E){
-            Log("Socket creation failed with exception: " + E);
+            log("Socket creation failed with exception: " + E);
         }
         
         if (!ListenerActions.containsKey(Name)){
@@ -156,16 +153,17 @@ public class TCPApi {
         try{
             Reader.scheduleAtFixedRate(new TimerTsk(ListenerActions.get(Name),B,Listener),10,300);
         }catch(Exception E){
-            Log("Error reading line.");
+            log("Error reading line.");
         }
     }
     
-    public void CreateServerListener(Socket Listener, String Name, FuncStore Action){
+    //Creates a listener with a given socket.
+    public void createServerListener(Socket Listener, String Name, FuncStore Action){
         InputStreamReader R = null;
         try{
             R = new InputStreamReader(Listener.getInputStream());
         }catch(IOException E){
-            Log("Stream reader failed with exception : " + E);
+            log("Stream reader failed with exception : " + E);
         }
         
         if (!ListenerActions.containsKey(Name)){
@@ -182,24 +180,12 @@ public class TCPApi {
         try{
             Reader.scheduleAtFixedRate(new TimerTsk(ListenerActions.get(Name),B,Listener),10,300);
         }catch(Exception E){
-            Log("Stream reader failed with exception : " + E);
+            log("Stream reader failed with exception : " + E);
         }
     }
     
-    public void CloseConnection(String Name){
-        try{
-            Timers.get(Name).cancel();
-            Connections.get(Name).close();
-            Connections.remove(Name);
-            RemoveListener(Name);
-            Server.sendAll(Name, "Rem:" + Server.getName(Name));
-            Server.removeServer(Name);
-        }catch(IOException E){
-            
-        }
-    }
-    
-    public void CreateListenerAction(String ListenerKey,String Name, FuncStore Action){
+    //Creates an action for a given listener.
+    public void createListenerAction(String ListenerKey,String Name, FuncStore Action){
         HashMap<String,FuncStore> Save = ListenerActions.get(ListenerKey);
         if (Save == null){
             ListenerActions.put(ListenerKey,new HashMap<>());
@@ -207,25 +193,28 @@ public class TCPApi {
         ListenerActions.get(ListenerKey).put(Name,Action);
     }
     
-    public void CreateNilActionSet(String ListenerKey,String Name){
+    //Creates a void action set for a given listener.
+    public void createNilActionSet(String ListenerKey,String Name){
         ListenerActions.put(ListenerKey,new HashMap<>());
     }
     
-    public void RemoveListener(String Key){
+    //Removes a listener socket.
+    public void removeListener(String Key){
         Timers.remove(Key);
         ListenerActions.remove(Key);
     }
     
-    public void RemoveListenerAction(String ListenerKey,String Action){
+    //Removes a listener action for a given listener.
+    public void removeListenerAction(String ListenerKey,String Action){
         ListenerActions.get(ListenerKey).remove(Action);
     }
     
+    //Removes and closes a running timer.
+    public void closeTimer(String Name){
+        Timers.get(Name).cancel();
+        Timers.remove(Name);
+    }
+    
     public TCPApi(){
-        if (Server.IsServer){
-            APIType = true;
-            Log("Creating server API.");
-        }else{
-            Log("Creating client API.");
-        }
     }
 }
