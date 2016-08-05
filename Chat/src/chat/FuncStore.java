@@ -6,6 +6,7 @@ package chat;
 
 public class FuncStore {
     String Name;
+    
     void Run(String Text){
         
     }
@@ -14,4 +15,3 @@ public class FuncStore {
         this.Name = Name;
     }
 }
-

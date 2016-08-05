@@ -31,8 +31,19 @@ public class IP {
         System.exit(1);
         return null;
     }
-    //This is some trash I swear.
+    
+    public static boolean checkIP(String IP){
+        String[] Dots = IP.split(".");
+        System.out.println(Dots.length);
+        if (Dots.length == 4){
+            return true;
+        }
+        return false;
+    }
+    
+    //This is some trash, delete?.
     public String tostring(){
         return IP;
     }
 }
+
