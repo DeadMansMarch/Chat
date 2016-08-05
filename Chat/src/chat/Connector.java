@@ -14,7 +14,7 @@ import java.net.*;
  */
 public class Connector {
     
-    private int Key = 0;
+    private String Key = "";
     private final Socket Connection;
     private final String IP;
     
@@ -41,7 +41,7 @@ public class Connector {
         Thread ServerThread = new Thread(new Runnable(){
             @Override
             public void run(){
-                Key = Server.RandCreator.nextInt();
+                Key = Server.EnDe.makeKey();
                 protocolC();
             }
         },"ServerThread");
@@ -69,14 +69,17 @@ public class Connector {
         Server.API.log(K);
         switch(K){
             case "::Connect?":
+                connect();
+                
+                Server.API.send(IP,"OK");
                 break;
             case "::Encrypt?":
-                Server.API.send(IP,Integer.toString(Key));
+                Server.API.send(IP,Key);
                 break;
             default:
                 String[] DE = K.substring(2).split(":");
                 if (DE[0].equals("Password")){
-                    connect();
+                    
                     
                     String Comp = "";
                     if (DE.length > 1){
@@ -147,6 +150,7 @@ public class Connector {
         
          enSend(IP,StringSet);
     }
+   
     
     //Sends encrypted messeges.
     public void enSend(String Connection,String Text){

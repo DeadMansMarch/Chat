@@ -165,6 +165,11 @@ public class Server {
         });
     }
     
+    //Returns all IPs connected to the server.
+    public String[] IPConnections(){
+        return (String[]) Connections.keySet().toArray();
+    }
+    
     //Constructor.
     public Server(){
         

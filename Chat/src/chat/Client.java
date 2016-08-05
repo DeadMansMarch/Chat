@@ -8,7 +8,7 @@ public class Client{
     private String Serverpass;
     static TCPApi API = new TCPApi(false);
     static Crypt EnDe;
-    static int Key = 0;
+    static String Key = "";
     static UI MainUI;
     public static ServerLogin NewLogin;
     public static Thread RunUI;
@@ -44,17 +44,13 @@ public class Client{
                 RunUI.start();
                 API.send("Main","Encrypt?");
                 break;
-            case "::Connected":
-                
-                API.send("Main", K);
-                break;
             default:
                 String[] DeMessage = EnDe.Decrypt(K.substring(2), Key).split(":");
                 if (DeMessage[0].equals("GoodPass")){
                     enSend("Main","@Start");
                 }else if (DeMessage[1].equals("BadPass")){
                     NewLogin.dispose();
-                }else if (Key != 0 && EnDe.Decrypt(K.substring(2), Key).equals("SessionStart")){
+                }else if (!Key.equals("") && EnDe.Decrypt(K.substring(2), Key).equals("SessionStart")){
                     
                     API.removeListenerAction("Main","Main_Listener");
                     API.createListenerAction("Main", "Communication", new FuncStore("Connection"){
@@ -80,7 +76,7 @@ public class Client{
                     });
                     
                 }else{
-                    Key = Integer.parseInt(K.substring(2));
+                    Key = K.substring(2);
                     enSend("Main","Password:" + Serverpass);
                 }
                 break;
