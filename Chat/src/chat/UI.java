@@ -249,7 +249,8 @@ public class UI extends javax.swing.JFrame {
 
     public void addMessage(String name, String message){
         jTextArea1.append(name +": " + message);
-        jTextArea1.append("\n");       
+        jTextArea1.append("\n");
+        jTextArea1.setCaretPosition(jTextArea1.getDocument().getLength());
     }
     
     
@@ -259,6 +260,7 @@ public class UI extends javax.swing.JFrame {
             jTextArea1.append(Name + ": " + Text);
             jTextArea1.append("\n");
             Client.enSend("Main","|||" + Text);
+            jTextArea1.setCaretPosition(jTextArea1.getDocument().getLength());
         }
     }
     
