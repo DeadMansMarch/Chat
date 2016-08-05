@@ -11,223 +11,84 @@ import java.net.*;
 /**
  * @author Liam Pierce
  */
-public class SocketApi {
-    private static boolean APIType;
-    private ServerSocket Accept;
-    
-    public static boolean Log = true;
-    
+public class TCPApi {
+    boolean Log = true;
+
     final private HashMap<String,Socket> Connections = new HashMap<>();
+    final private HashMap<String,BufferedReader> Readers = new HashMap<>();
     final private HashMap<String,Timer> Timers = new HashMap<>();
     final private HashMap<String,HashMap<String,FuncStore>> ListenerActions = new HashMap<>();
     
-    //Logging >
-    //Logs a header.
-    private void logHeader(){
-        System.out.print("Log: ");
-    }
-
-    //Logs a string.
-    public void log(String Text){
-        if (Log){
-            logHeader();
-            System.out.println(Text);
-        }
-    }
     
-    //Logs an object.
-    public void log(Object Text){
-        if (Log){
-            logHeader();
-            System.out.println(Text);
-        }
-    }
-    
-    //Logs a boolean.
-    public void log(boolean Text){
-        if (Log){
-            logHeader();
-            System.out.println(Text);
-        }
-    }
-    
-    //Logs a character.
-    public void log(char Text){
-        if (Log){
-            logHeader();
-            System.out.println(Text);
-        }
-    }
-    
-    //SocketConnection >
-    //Private method for creating a connection. Not to be used in public API.
-    private boolean TCPConnector(IP Host,String Name) throws IOException{
-        Socket newSocket = new Socket(Host.Converter(),Host.GetPort());
-        newSocket.setReuseAddress(true);
-        
-        Connections.put(Name,newSocket);
-        log(" Connection Init Successful");
-        return true;
-    }
-    
-    //Creates a connection given an IP. Will autoreconnect.
-    public boolean connection(IP Host,String Name){
+    public void Connection(IP Host,String Name){
         try{
-            connector(Host,Name);
+            Connections.put(Name,new Socket(Host.Converter(),Host.GetPort()));
         }catch(Exception E){
-            log("Connection failed : " + E);
-            return autoConnect(Host,Name);
-        }
-        return true;
-    }
-    
-    //A method for autoreconnection.
-    public boolean autoConnect(IP Host, String Name){
-        int Tries = 0;
-        boolean Connected = false;
-        while (!Connected){
-            try{
-                connector(Host,Name);
-                break;
-            }catch(Exception E){
-                Tries += 1;
-                log("Reconnect failed : " + E);
-                if (Tries >= 30){
-                    Client.Disconnect();
-                    return false;
-                }
+            if (Log == true){
+                System.out.println("Connection to server: " + Host.GetIP() +
+                        " failed.");
             }
         }
-        
-        return true;
     }
     
-    //Sends data to a given mapped connection.
-    public void send(String Connector,String Send){
+    public void Send(String Connector,String Send){
         Socket To = Connections.get(Connector);
         DataOutputStream Output;
         try{
             Output = new DataOutputStream(To.getOutputStream());
             Output.writeBytes("::" + Send + "\n");
-            Output.flush();
         }catch(IOException E){
-            log("Sending failed.");
-        }
-    }
-    
-    //Returns a socket.
-    public Socket getServerSocket(int Port){
-        Socket Try = null;
-        if (Accept == null){
-            try{
-                Accept = new ServerSocket(Port);
-            }catch(IOException E){
-                log("Error in serversocket: " + E);
+            if (Log == true){
+                System.out.println("Message sending failed.");
             }
         }
-        try{
-            Try = Accept.accept();
-        }catch(Exception E){
-            log("Server failed : " + E);
-        }
-        return Try;
     }
     
-    //A method that creates a listener on a given port.
-    public void createListener(int Port, String Name, FuncStore Action){
-        Socket Listener = null;
+    public void CreateListener(int Port, String Name, FuncStore Action){
+        Socket Listener;
         InputStreamReader R = null;
         try{
-            log("Working on listener.");
-            Listener = getServerSocket(Port);
-            log("ServerSocket created successfully.");
+            Listener = new ServerSocket(Port).accept();
+            if (Log == true){
+                System.out.println("ServerSocket created successfully.");
+            }
             R = new InputStreamReader(Listener.getInputStream());
         }catch(IOException E){
-            log("Socket creation failed with exception: " + E);
+            if (Log == true){
+                System.out.println("Socket creation failed: " + E);
+            }
         }
-        
-        if (!ListenerActions.containsKey(Name)){
-            ListenerActions.put(Name, new HashMap<>());
-        }
-        
-        ListenerActions.get(Name).put("Main_Listener",Action);
         
         BufferedReader B = new BufferedReader(R);
+        Readers.put(Name,B);
         
-        
+        if (!Action.equals(null)){
+            CreateListenerAction(Name,"Main_Listener",Action);
+        }
         Timer Reader = new Timer();
         Timers.put(Name,Reader);
         try{
-            Reader.scheduleAtFixedRate(new TimerTsk(ListenerActions.get(Name),B,Listener),10,300);
-        }catch(Exception E){
-            log("Error reading line.");
-        }
-    }
-    
-    //Creates a listener with a given socket.
-    public void createServerListener(Socket Listener, String Name, FuncStore Action){
-        InputStreamReader R = null;
-        try{
-            R = new InputStreamReader(Listener.getInputStream());
+            Reader.scheduleAtFixedRate(new TimerTsk(ListenerActions.get(Name),B.readLine()),10,300);
         }catch(IOException E){
-            log("Stream reader failed with exception : " + E);
-        }
-        
-        if (!ListenerActions.containsKey(Name)){
-            ListenerActions.put(Name, new HashMap<>());
-        }
-        
-        ListenerActions.get(Name).put("Main_Listener",Action);
-        
-        BufferedReader B = new BufferedReader(R);
-
-        Timer Reader = new Timer();
-        Timers.put(Name,Reader);
-        
-        try{
-            Reader.scheduleAtFixedRate(new TimerTsk(ListenerActions.get(Name),B,Listener),10,300);
-        }catch(Exception E){
-            log("Stream reader failed with exception : " + E);
+            if (Log == true){
+                System.out.println("Error reading line.");
+            }
         }
     }
     
-    //Creates an action for a given listener.
-    public void createListenerAction(String ListenerKey,String Name, FuncStore Action){
-        HashMap<String,FuncStore> Save = ListenerActions.get(ListenerKey);
-        if (Save == null){
-            ListenerActions.put(ListenerKey,new HashMap<>());
-        }
+    public void CreateListenerAction(String ListenerKey,String Name, FuncStore Action){
         ListenerActions.get(ListenerKey).put(Name,Action);
     }
     
-    //Creates a void action set for a given listener.
-    public void createNilActionSet(String ListenerKey,String Name){
-        ListenerActions.put(ListenerKey,new HashMap<>());
-    }
-    
-    //Removes a listener socket.
-    public void removeListener(String Key){
+    public void RemoveListener(String Key){
         Timers.remove(Key);
-        ListenerActions.remove(Key);
+        Readers.remove(Key);
     }
     
-    //Removes a listener action for a given listener.
-    public void removeListenerAction(String ListenerKey,String Action){
-        ListenerActions.get(ListenerKey).remove(Action);
+    public void RemoveListenerAction(String Listener,String Action){
+        ListenerActions.get(Listener).remove(Action);
     }
     
-    //Removes and closes a running timer.
-    public void closeTimer(String Name){
-        Timers.get(Name).cancel();
-        Timers.remove(Name);
-    }
-    
-    //Returns API type.
-    public static boolean APIType(){
-        return APIType;
-    }
-    
-    public SocketApi(boolean APIType){
-        this.APIType = APIType;
+    public TCPApi(){
     }
 }
