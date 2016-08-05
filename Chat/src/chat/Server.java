@@ -171,7 +171,7 @@ public class Server {
     }
     
     //Main method.
-    /*
+    
     public static void main(String[] args) {
         Server.IsServer = true;
         Server.API = new TCPApi(true);
@@ -208,5 +208,5 @@ public class Server {
         ServerSender.start();
         
     }
-*/
+
 }

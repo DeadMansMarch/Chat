@@ -41,7 +41,7 @@ public class Connector {
         Thread ServerThread = new Thread(new Runnable(){
             @Override
             public void run(){
-                Key = Server.RandCreator.nextInt(500);
+                Key = Server.RandCreator.nextInt();
                 protocolC();
             }
         },"ServerThread");
@@ -71,7 +71,6 @@ public class Connector {
             case "::Connect?":
                 break;
             case "::Encrypt?":
-                Server.API.log(Key);
                 Server.API.send(IP,Integer.toString(Key));
                 break;
             default:
@@ -84,14 +83,10 @@ public class Connector {
                         Comp = DE[1];
                     }
                     
-                    System.out.println("OK");
-                    
                     if (Server.compareStrings(Comp)){
-                        System.out.println("OK");
-                        Server.API.send(IP,"OK");
+                        enSend(IP,"GoodPass");
                     }else{
-                        System.out.println("OK");
-                        Server.API.send(IP,"BadPass");
+                        enSend(IP,"BadPass");
                     }
                 }else if (Server.EnDe.Decrypt(K.substring(2), Key).equals("@Start")){
                     //Tells client to reset actions.

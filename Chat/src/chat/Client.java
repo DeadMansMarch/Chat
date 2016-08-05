@@ -5,7 +5,7 @@ package chat;
  * @author Liam Pierce
  */
 public class Client{
-    static String Last;
+    private String Serverpass;
     static TCPApi API = new TCPApi(false);
     static Crypt EnDe;
     static int Key = 0;
@@ -22,10 +22,10 @@ public class Client{
     
     //Main connection protocol.
     public boolean protocolC(String Password){
-        
+        this.Serverpass = Password;
         API.connection(Server,"Main");
         
-        API.send("Main","Password:" + Password);
+        API.send("Main","Connect?");
         
         API.createListener(6789,"Main", new FuncStore("MainConnectionProtocol"){
             @Override
@@ -38,12 +38,8 @@ public class Client{
     
     //Intercept for connection protocol.
     private void connectionProtocolAssist(String K){
-        Client.Last = K;
         System.out.println(K);
         switch(K){
-            
-            case "::BadPass":
-                NewLogin.dispose();
             case "::OK":
                 RunUI.start();
                 API.send("Main","Encrypt?");
@@ -53,7 +49,12 @@ public class Client{
                 API.send("Main", K);
                 break;
             default:
-                if (Key != 0 && EnDe.Decrypt(K.substring(2), Key).equals("SessionStart")){
+                String[] DeMessage = EnDe.Decrypt(K.substring(2), Key).split(":");
+                if (DeMessage[0].equals("GoodPass")){
+                    enSend("Main","@Start");
+                }else if (DeMessage[1].equals("BadPass")){
+                    NewLogin.dispose();
+                }else if (Key != 0 && EnDe.Decrypt(K.substring(2), Key).equals("SessionStart")){
                     
                     API.removeListenerAction("Main","Main_Listener");
                     API.createListenerAction("Main", "Communication", new FuncStore("Connection"){
@@ -80,7 +81,7 @@ public class Client{
                     
                 }else{
                     Key = Integer.parseInt(K.substring(2));
-                    enSend("Main","@Start");
+                    enSend("Main","Password:" + Serverpass);
                 }
                 break;
         }
