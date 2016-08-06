@@ -17,6 +17,8 @@ public class Connector {
     private String Key = "";
     private final Socket Connection;
     private final String IP;
+    private final int LocalPort;
+    private final InetAddress LocalAddress;
     
     //Connects server object to given client.
     
@@ -36,12 +38,13 @@ public class Connector {
     public Connector(Socket Connection){
         this.Connection = Connection;
         this.IP = Connection.getInetAddress().toString().substring(1);
-        
+        this.LocalPort = Connection.getLocalPort();
+        this.LocalAddress = Connection.getLocalAddress();
         //Runs connection protocol while allowing connector to continue without wait.
         Thread ServerThread = new Thread(new Runnable(){
             @Override
             public void run(){
-                Key = Crypt.makeKey();
+                
                 protocolC();
             }
         },"ServerThread");
@@ -71,11 +74,12 @@ public class Connector {
             case "::Connect?":
                 connect();
                 
-                Server.API.send(IP, "OK");
+                Server.API.send(IP, "OK?");
                 break;
             case "::Encrypt?":
+                Key = Crypt.makeKey();
                 Server.API.send(IP,"Key:" + Key);
-                System.out.println("MMMsendkey.");
+                
                 break;
             default:
                 String[] DE;
